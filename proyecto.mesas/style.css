@@ -1,0 +1,51 @@
+/* Colores de estado para mesas */
+.state-disponible {
+  background-color: #28a745; /* verde */
+  color: white;
+}
+.state-ocupada {
+  background-color: #0d6efd; /* azul */
+  color: white;
+}
+.state-deshabilitada {
+  background-color: #212529; /* negro/gris oscuro */
+  color: white;
+}
+
+/* Ajuste visual de las cards de mesa */
+#gridMesas .card {
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+#gridMesas .card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.12);
+}
+
+/* Para que el texto secundario se vea bien */
+.text-light-weak {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Fondo general sobrio */
+body {
+  background: #f5f7fa; /* gris azulado suave, profesional */
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Títulos */
+h1, .card-title {
+  font-weight: 600;
+}
+
+.table th {
+  font-weight: 600;
+  text-align: center;
+}
+.table td {
+  vertical-align: middle;
+}
+.table td button {
+  margin-right: 4px;
+}
