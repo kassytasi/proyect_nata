@@ -9,14 +9,14 @@
 </head>
 <body data-page="reservas" class="p-4">
   <div class="container">
-    <h1 class="mb-4">Gestión de Reservas</h1>
+    <h1 class="mb-4 text-center">Gestión de Reservas</h1>
 
     <!-- Filtros -->
-    <div class="row mb-3">
-      <div class="col-md-3">
+    <div class="row mb-3 g-2">
+      <div class="col-md-3 col-12">
         <input type="date" id="filtroFecha" class="form-control" />
       </div>
-      <div class="col-md-3">
+      <div class="col-md-3 col-12">
         <select id="filtroEstado" class="form-select">
           <option value="">-- Todos los estados --</option>
           <option value="Pendiente">Pendiente</option>
@@ -26,12 +26,12 @@
           <option value="No Show">No Show</option>
         </select>
       </div>
-      <div class="col-md-3 d-flex gap-2">
-        <button id="btnHoy" class="btn btn-outline-primary w-100">Hoy</button>
-        <button id="btnMañana" class="btn btn-outline-primary w-100">Mañana</button>
-        <button id="btnSemana" class="btn btn-outline-primary w-100">Semana</button>
+      <div class="col-md-3 col-12 d-grid gap-2">
+        <button id="btnHoy" class="btn btn-outline-primary">Hoy</button>
+        <button id="btnMañana" class="btn btn-outline-primary">Mañana</button>
+        <button id="btnSemana" class="btn btn-outline-primary">Semana</button>
       </div>
-      <div class="col-md-3">
+      <div class="col-md-3 col-12">
         <button id="btnLimpiarFiltros" class="btn btn-secondary w-100">Limpiar filtros</button>
       </div>
     </div>
@@ -40,18 +40,18 @@
     <div id="resumenReservas" class="mb-3"></div>
 
     <!-- Botones -->
-    <div class="mb-3 d-flex gap-2">
-      <button class="btn btn-secondary" onclick="location.href='mesas.html'">Ir a Mesas</button>
-      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalReserva">Nueva Reserva</button>
+    <div class="mb-3 d-grid gap-2 d-md-flex">
+      <button class="btn btn-secondary w-100 w-md-auto" onclick="location.href='mesas.html'">Ir a Mesas</button>
+      <button id="btnNuevaReserva" class="btn btn-primary w-100 w-md-auto" data-bs-toggle="modal" data-bs-target="#modalReserva">Nueva Reserva</button>
     </div>
 
-    <!-- Grilla -->
+    <!-- Grilla (aquí inyecta la tabla desde JS) -->
     <div id="gridReservas" class="row g-3"></div>
   </div>
 
   <!-- Modal Reserva -->
   <div class="modal fade" id="modalReserva" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
       <form id="formReserva" class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Reserva</h5>
@@ -59,57 +59,73 @@
         </div>
         <div class="modal-body">
           <input type="hidden" id="resEditId" />
-          <div class="mb-3">
-            <label class="form-label">Nombre Cliente</label>
-            <input type="text" id="nombreCliente" class="form-control" required />
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Número de Personas</label>
-            <input type="number" id="numeroPersonas" class="form-control" required min="1" />
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Fecha</label>
-            <input type="date" id="fechaReserva" class="form-control" required />
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Hora</label>
-            <input type="time" id="horaReserva" class="form-control" required />
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Mesa</label>
-            <select id="idMesaAsignada" class="form-select"></select>
-            <small id="msgMesasDisponibles" class="form-text"></small>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Estado</label>
-            <select id="estadoReserva" class="form-select">
-              <option>Pendiente</option>
-              <option>Confirmada</option>
-              <option>Cancelada</option>
-              <option>Finalizada</option>
-              <option>No Show</option>
-            </select>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Ocasión Especial</label>
-            <select id="ocasionEspecial" class="form-select">
-              <option value="">Ninguna</option>
-              <option value="Cumpleaños">🎂 Cumpleaños</option>
-              <option value="Aniversario">💖 Aniversario</option>
-              <option value="Reunión de Negocios">💼 Reunión de Negocios</option>
-              <option value="Graduación">🎓 Graduación</option>
-              <option value="Compromiso">💍 Compromiso</option>
-              <option value="Cena Romántica">🌹 Cena Romántica</option>
-              <option value="Despedida">🥂 Despedida</option>
-              <option value="Otro">✨ Otro</option>
-            </select>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Notas Adicionales</label>
-            <textarea id="notasAdicionales" class="form-control"></textarea>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Nombre Cliente</label>
+              <input type="text" id="nombreCliente" class="form-control" required />
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Número de Personas</label>
+              <input type="number" id="numeroPersonas" class="form-control" required min="1" />
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Estado</label>
+              <select id="estadoReserva" class="form-select">
+                <option>Pendiente</option>
+                <option>Confirmada</option>
+                <option>Finalizada</option>
+                <option>Cancelada</option>
+                <option>No Show</option>
+              </select>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Fecha</label>
+              <input type="date" id="fechaReserva" class="form-control" required />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Hora (inicio)</label>
+              <input type="time" id="horaReserva" class="form-control" min="08:00" max="20:00" required />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Duración (horas)</label>
+              <select id="duracionHoras" class="form-select" required>
+                <option value="1">1</option>
+                <option value="2" selected>2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Mesa</label>
+              <select id="idMesaAsignada" class="form-select"></select>
+              <small id="msgMesasDisponibles" class="form-text"></small>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Ocasión Especial</label>
+              <select id="ocasionEspecial" class="form-select">
+                <option value="">Ninguna</option>
+                <option value="Cumpleaños">🎂 Cumpleaños</option>
+                <option value="Aniversario">💖 Aniversario</option>
+                <option value="Reunión de Negocios">💼 Reunión de Negocios</option>
+                <option value="Graduación">🎓 Graduación</option>
+                <option value="Compromiso">💍 Compromiso</option>
+                <option value="Cena Romántica">🌹 Cena Romántica</option>
+                <option value="Despedida">🥂 Despedida</option>
+                <option value="Otro">✨ Otro</option>
+              </select>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label">Notas Adicionales</label>
+              <textarea id="notasAdicionales" class="form-control"></textarea>
+            </div>
           </div>
         </div>
-        <div class="modal-footer">
+        <div class="modal-footer d-grid gap-2 d-md-flex">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
           <button class="btn btn-primary" type="submit">Guardar</button>
         </div>
       </form>
@@ -122,5 +138,9 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
+
+
+
 
 
