@@ -1,4 +1,4 @@
-/* Colores de estado para mesas */
+/* ====== COLORES DE ESTADO PARA MESAS ====== */
 .state-disponible {
   background-color: #28a745; /* verde */
   color: white;
@@ -12,40 +12,112 @@
   color: white;
 }
 
-/* Ajuste visual de las cards de mesa */
+/* ====== CARDS DE MESAS ====== */
 #gridMesas .card {
-  border-radius: 12px;
+  border-radius: 14px;
   box-shadow: 0 4px 8px rgba(0,0,0,0.08);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 #gridMesas .card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 6px 14px rgba(0,0,0,0.12);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.15);
 }
-
-/* Para que el texto secundario se vea bien */
 .text-light-weak {
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.85);
 }
 
-/* Fondo general sobrio */
-body {
-  background: #f5f7fa; /* gris azulado suave, profesional */
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+/* ====== TABLAS DE RESERVAS ====== */
+.table {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
 }
-
-/* Títulos */
-h1, .card-title {
-  font-weight: 600;
-}
-
 .table th {
   font-weight: 600;
   text-align: center;
 }
 .table td {
   vertical-align: middle;
+  text-align: center;
 }
 .table td button {
-  margin-right: 4px;
+  margin: 0 2px;
 }
+
+/* ====== ALERTAS PERSONALIZADAS ====== */
+#alertContainer .alert {
+  border-radius: 10px;
+  font-size: 0.9rem;
+  padding: 10px 16px;
+  margin-bottom: 8px;
+}
+
+/* ====== FONDO GENERAL ====== */
+body {
+  background: linear-gradient(135deg, #e9f1f7, #fdfdfd); /* fondo suave, profesional */
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+  min-height: 100vh;
+}
+
+/* ====== TITULOS ====== */
+h1 {
+  font-weight: 700;
+  color: #2c3e50;
+}
+h5.card-title {
+  font-weight: 600;
+}
+
+/* ====== BOTONES ====== */
+.btn {
+  border-radius: 8px;
+  font-weight: 500;
+}
+.btn-primary {
+  background-color: #007bff;
+}
+.btn-primary:hover {
+  background-color: #0069d9;
+}
+.btn-outline-danger:hover {
+  background-color: #dc3545;
+  color: #fff;
+}
+.btn-outline-light:hover {
+  background-color: rgba(255,255,255,0.2);
+}
+
+/* ====== MODALES ====== */
+.modal-content {
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+}
+.modal-header {
+  background: #f5f7fa;
+  border-bottom: 1px solid #dee2e6;
+}
+.modal-footer {
+  border-top: 1px solid #dee2e6;
+}
+
+/* ====== RESPONSIVE ====== */
+@media (max-width: 768px) {
+  #gridMesas .col-md-3 {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+}
+@media (max-width: 576px) {
+  #gridMesas .col-md-3 {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+  .table th, .table td {
+    font-size: 0.85rem;
+    padding: 6px;
+  }
+}
+
+
