@@ -1,12 +1,12 @@
-/* ===================== app.js (completo) ===================== */
+/* ================= app.js (COMPLETO) ================= */
 
-/* ----------------- UTILIDADES ----------------- */
+/* ---------------- UTILIDADES ---------------- */
 function getData(key) {
   try { return JSON.parse(localStorage.getItem(key) || "[]"); } catch (e) { return []; }
 }
 function saveData(key, data) { localStorage.setItem(key, JSON.stringify(data)); }
 
-/* Generadores de IDs */
+/* IDs */
 function generateMesaShortId() {
   const mesas = getData("mesas") || [];
   const nums = mesas.map(m => {
@@ -14,24 +14,22 @@ function generateMesaShortId() {
     return match ? Number(match[1]) : 0;
   });
   const max = nums.length ? Math.max(...nums) : 0;
-  const next = max + 1;
-  return "mesa" + String(next).padStart(2, "0");
+  return "mesa" + String(max + 1).padStart(2, "0");
 }
 function generateReservaId() {
   const reservas = getData("reservas") || [];
   const nums = reservas.map(r => {
-    const candidate = r.idReserva || "";
+    const candidate = r.idReserva || r.id || "";
     const match = String(candidate).match(/R0*([0-9]+)/i);
     return match ? Number(match[1]) : 0;
   });
   const max = nums.length ? Math.max(...nums) : 0;
-  const next = max + 1;
-  return "R" + String(next).padStart(3, "0");
+  return "R" + String(max + 1).padStart(3, "0");
 }
 
-/* ----------------- ALERTAS (no alert nativo) ----------------- */
+/* ---------------- ALERTAS (bootstrap) ---------------- */
 function showAlert(msg, type = "info", ms = 3500) {
-  const area = document.getElementById("alertContainer");
+  const area = document.getElementById("alertContainer") || document.getElementById("alertBox");
   if (!area) { console.log(`[${type}] ${msg}`); return; }
   const el = document.createElement("div");
   const map = { info: "info", success: "success", danger: "danger", warning: "warning" };
@@ -42,7 +40,7 @@ function showAlert(msg, type = "info", ms = 3500) {
   setTimeout(() => { try { el.remove(); } catch (e) {} }, ms);
 }
 
-/* ----------------- VALIDACIÓN UI ----------------- */
+/* ---------------- VALIDACIÓN UI ---------------- */
 function setInvalid(input, message) {
   if (!input) return;
   input.classList.add("is-invalid");
@@ -65,7 +63,7 @@ function clearAllValidation(formEl) {
   });
 }
 
-/* ----------------- TIEMPO / FECHAS ----------------- */
+/* ---------------- FECHAS / TIEMPO ---------------- */
 function timeToMinutes(t) {
   if (!t || typeof t !== "string") return NaN;
   const p = t.split(":").map(Number);
@@ -105,29 +103,26 @@ function formatDateYMD(d) {
   return `${y}-${m}-${day}`;
 }
 
-/* ----------------- UTILS MESAS ----------------- */
+/* ---------------- MESAS HELPERS ---------------- */
 function renumberMesas(mesas) { mesas.forEach((m,i) => { m.numero = i+1; }); }
 function formatMesaNumero(n) { return String(n || 0).padStart(2, "0"); }
 
-/* ----------------- RESET MESAS (limpiar datos inconsistentes) ----------------- */
+/* ---------------- RESET MESAS ---------------- */
 function resetMesas() {
   const mesasIniciales = [
     { id: "mesa01", capacidad: 2, ubicacion: "Ventana", estado: "ocupada" },
-    { id: "mesa02", capacidad: 4, ubicacion: "Centro", estado: "disponible" },
-    { id: "mesa03", capacidad: 6, ubicacion: "Jardín", estado: "deshabilitada" },
-    { id: "mesa04", capacidad: 8, ubicacion: "Terraza", estado: "disponible" },
-    { id: "mesa05", capacidad: 10, ubicacion: "VIP", estado: "disponible" },
+    { id: "mesa02", capacidad: 4, ubicacion: "Interior", estado: "disponible" },
+    { id: "mesa03", capacidad: 6, ubicacion: "VIP", estado: "deshabilitada" },
+    { id: "mesa04", capacidad: 8, ubicacion: "Jardín", estado: "disponible" }
   ];
-  // asegurar tipos numéricos
   mesasIniciales.forEach(m => m.capacidad = Number(m.capacidad));
   renumberMesas(mesasIniciales);
   saveData("mesas", mesasIniciales);
+  saveData("reservas", getData("reservas") || []);
   showAlert("Mesas reiniciadas correctamente.", "success");
-  // si estamos en página mesas, renderizar
-  if (document.body.dataset.page === "mesas") renderMesas();
 }
 
-/* ----------------- CONFIRM DELETE: crea modal si no existe ----------------- */
+/* ---------------- CONFIRM DELETE MODAL ---------------- */
 (function ensureConfirmModal() {
   if (!document.getElementById("confirmModal")) {
     const modalHtml = `
@@ -138,56 +133,51 @@ function resetMesas() {
               <h5 class="modal-title">Confirmar eliminación</h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-              ¿Estás seguro que deseas eliminar este elemento? Esta acción no se puede deshacer.
-            </div>
+            <div class="modal-body" id="confirmModalBody">¿Estás seguro que deseas eliminar este elemento?</div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
               <button type="button" id="confirmDeleteBtn" class="btn btn-danger">Eliminar</button>
             </div>
           </div>
         </div>
-      </div>
-    `;
-    const tmp = document.createElement("div");
-    tmp.innerHTML = modalHtml;
+      </div>`;
+    const tmp = document.createElement("div"); tmp.innerHTML = modalHtml;
     document.body.appendChild(tmp.firstElementChild);
   }
 })();
-
 let _pendingDeleteAction = null;
-function confirmDelete(action) {
+function confirmDelete(action, message = null) {
   _pendingDeleteAction = action;
+  const body = document.getElementById("confirmModalBody");
+  if (body && message) body.textContent = message;
   try {
-    const modal = new bootstrap.Modal(document.getElementById("confirmModal"));
-    modal.show();
+    new bootstrap.Modal(document.getElementById("confirmModal")).show();
   } catch (e) {
-    // fallback nativo (no debería ocurrir)
-    if (window.confirm("¿Estás seguro que deseas eliminar?")) {
-      action();
-    }
+    // fallback
+    if (typeof _pendingDeleteAction === "function") { try { _pendingDeleteAction(); } catch (er) {} }
     _pendingDeleteAction = null;
   }
 }
 document.addEventListener("click", (ev) => {
   if (ev.target && ev.target.id === "confirmDeleteBtn") {
     if (typeof _pendingDeleteAction === "function") {
-      try { _pendingDeleteAction(); } catch (e) {}
+      try { _pendingDeleteAction(); } catch (e) { console.error(e); }
       _pendingDeleteAction = null;
     }
     try { bootstrap.Modal.getInstance(document.getElementById("confirmModal")).hide(); } catch (e) {}
   }
 });
 
-/* ----------------- SINCRONIZACIÓN RESERVAS <-> MESAS (por tiempo) ----------------- */
+/* ---------------- SINCRONIZACIÓN POR TIEMPO ---------------- */
 function actualizarReservasPorTiempo() {
   const reservas = getData("reservas") || [];
   const mesas = getData("mesas") || [];
   const ahora = new Date();
+  let changed = false;
 
   reservas.forEach(r => {
-    const fecha = r.fechaReserva || r.fecha;
-    const hora = r.horaReserva || r.hora;
+    const fecha = r.fecha || r.fechaReserva;
+    const hora = r.hora || r.horaReserva;
     const dur = Number(r.duracion || r.duracionReserva || 1);
     if (!fecha || !hora) return;
     const inicio = parseDateTime(fecha, hora);
@@ -197,25 +187,41 @@ function actualizarReservasPorTiempo() {
     const mi = mesas.findIndex(m => m.id === mesaId);
 
     if (ahora > fin) {
-      if (r.estado !== "Finalizada") r.estado = "Finalizada";
-      if (mi >= 0 && mesas[mi].estado !== "deshabilitada") mesas[mi].estado = "disponible";
+      if (r.estado !== "Finalizada") { r.estado = "Finalizada"; changed = true; }
+      if (mi >= 0 && mesas[mi].estado !== "deshabilitada" && mesas[mi].estado !== "disponible") { mesas[mi].estado = "disponible"; changed = true; }
     } else if (ahora >= inicio && ahora < fin) {
-      if (r.estado !== "Confirmada") r.estado = "Confirmada";
-      if (mi >= 0 && mesas[mi].estado !== "deshabilitada") mesas[mi].estado = "ocupada";
-    } // else: futura -> no forzamos aquí
+      if (r.estado !== "Confirmada") { r.estado = "Confirmada"; changed = true; }
+      if (mi >= 0 && mesas[mi].estado !== "deshabilitada" && mesas[mi].estado !== "ocupada") { mesas[mi].estado = "ocupada"; changed = true; }
+    }
   });
 
-  saveData("reservas", reservas);
-  saveData("mesas", mesas);
+  if (changed) {
+    saveData("reservas", reservas);
+    saveData("mesas", mesas);
+  }
+  return changed;
 }
 
-/* ----------------- RENDER MESAS (plano) ----------------- */
+/* Auto-check y recarga si hubo cambios */
+(function startAutoCheckAndReload() {
+  // sync immediate
+  if (actualizarReservasPorTiempo()) {
+    try { location.reload(); } catch (e) {}
+    return;
+  }
+  setInterval(() => {
+    if (actualizarReservasPorTiempo()) {
+      try { location.reload(); } catch (e) {}
+    }
+  }, 60000);
+})();
+
+/* ---------------- RENDER MESAS (plano) ---------------- */
 function renderMesas() {
   const grid = document.getElementById("gridMesas");
   if (!grid) return;
   let mesas = getData("mesas") || [];
 
-  // seed si no existen mesas
   if (!mesas || mesas.length === 0) {
     resetMesas();
     mesas = getData("mesas") || [];
@@ -223,6 +229,7 @@ function renderMesas() {
 
   actualizarReservasPorTiempo();
   mesas = getData("mesas") || [];
+  mesas.forEach(m => m.capacidad = Number(m.capacidad || 0));
   renumberMesas(mesas);
   saveData("mesas", mesas);
 
@@ -251,7 +258,7 @@ function renderMesas() {
           <div class="d-flex justify-content-center gap-2">
             <button class="btn btn-sm btn-outline-light" onclick="openEditMesa('${m.id}')">Editar</button>
             <button class="btn btn-sm btn-info" ${ (m.estado === "ocupada" || m.estado === "deshabilitada") ? "disabled" : "" } onclick="reservarDesdeMesa('${m.id}')">Reservar</button>
-            <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete(() => deleteMesa('${m.id}'))">Eliminar</button>
+            <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete(() => deleteMesa('${m.id}'), '¿Eliminar mesa ${num}?')">Eliminar</button>
           </div>
         </div>
       </div>
@@ -260,7 +267,7 @@ function renderMesas() {
   });
 }
 
-/* ----------------- MESAS: acciones ----------------- */
+/* ---------------- ACCIONES MESAS ---------------- */
 function openEditMesa(id) {
   const mesas = getData("mesas") || [];
   const mesa = mesas.find(m => m.id === id);
@@ -271,11 +278,10 @@ function openEditMesa(id) {
   document.getElementById("estadoMesa").value = mesa.estado || "disponible";
   const wrapper = document.getElementById("estadoMesaGroup");
   if (wrapper) wrapper.style.display = "block";
-  new bootstrap.Modal(document.getElementById("modalMesa")).show();
+  try { new bootstrap.Modal(document.getElementById("modalMesa")).show(); } catch (e) {}
 }
 
 function deleteMesa(id) {
-  // verificar reservas activas vinculadas
   const reservas = getData("reservas") || [];
   const tieneActivas = reservas.some(r => {
     const rMesa = r.idMesaAsignada || r.idMesa;
@@ -311,14 +317,14 @@ function reservarDesdeMesa(mesaId) {
     if (document.getElementById("resEditId")) document.getElementById("resEditId").value = "";
     populateMesaSelect(mesaId);
     setTimeout(() => { if (document.getElementById("idMesaAsignada")) document.getElementById("idMesaAsignada").value = mesaId; }, 0);
-    new bootstrap.Modal(document.getElementById("modalReserva")).show();
+    try { new bootstrap.Modal(document.getElementById("modalReserva")).show(); } catch (e) {}
   } else {
     localStorage.setItem("mesaSeleccionada", mesaId);
     location.href = "reservas.html";
   }
 }
 
-/* ----------------- SELECT MESAS DISPONIBLES (considerando fecha/hora/duración) ----------------- */
+/* ---------------- SELECT MESAS DISPONIBLES ---------------- */
 function populateMesaSelect(currentMesaId = null) {
   const select = document.getElementById("idMesaAsignada");
   if (!select) return;
@@ -334,21 +340,19 @@ function populateMesaSelect(currentMesaId = null) {
   function mesaLibrePara(mesaId) {
     const m = mesas.find(x => x.id === mesaId);
     if (!m) return false;
-    // NO mostrar deshabilitadas (salvo si es la mesa actual en edición)
     if (m.estado === "deshabilitada" && mesaId !== currentMesaId) return false;
-    // si no hay fecha/hora -> mostrar mesas 'disponible' y también current
     if (!fecha || !hora) return (m.estado === "disponible" || m.id === currentMesaId);
 
     const start = timeToMinutes(hora);
     const end = start + Math.round(dur * 60);
 
     return !reservas.some(r => {
-      const rFecha = r.fechaReserva || r.fecha || "";
-      const rHora = r.horaReserva || r.hora || "";
+      const rFecha = r.fecha || r.fechaReserva || "";
+      const rHora = r.hora || r.horaReserva || "";
       const rDur = Number(r.duracion || r.duracionReserva || 1);
       const rMesaId = r.idMesaAsignada || r.idMesa;
       if (!rMesaId) return false;
-      if (editingId && (r.idReserva === editingId || r.id === editingId)) return false;
+      if (editingId && (r.id === editingId || r.idReserva === editingId)) return false;
       if (rMesaId !== mesaId) return false;
       if (r.estado === "Cancelada" || r.estado === "Finalizada") return false;
       if (!sameDate(rFecha, fecha)) return false;
@@ -379,15 +383,15 @@ function populateMesaSelect(currentMesaId = null) {
   if (msg) { msg.textContent = `✅ Mesas disponibles: ${available.length}`; msg.className = "form-text text-success"; }
 }
 
-/* ----------------- SOLAPAMIENTO ----------------- */
+/* ---------------- SOLAPAMIENTO ---------------- */
 function existeSolapamiento(mesaId, fecha, hora, dur, excludeReservaId = null) {
   const reservas = getData("reservas") || [];
   if (!fecha || !hora) return false;
   const start = timeToMinutes(hora);
   const end = start + Math.round(dur * 60);
   return reservas.some(r => {
-    const rFecha = r.fechaReserva || r.fecha || "";
-    const rHora = r.horaReserva || r.hora || "";
+    const rFecha = r.fecha || r.fechaReserva || "";
+    const rHora = r.hora || r.horaReserva || "";
     const rDur = Number(r.duracion || r.duracionReserva || 1);
     const rId = r.idReserva || r.id || null;
     const rMesa = r.idMesaAsignada || r.idMesa;
@@ -401,7 +405,7 @@ function existeSolapamiento(mesaId, fecha, hora, dur, excludeReservaId = null) {
   });
 }
 
-/* ----------------- RENDER RESERVAS (tabla) ----------------- */
+/* ---------------- RENDER RESERVAS (tabla) ---------------- */
 let reservaTimers = {};
 function clearAllReservaTimers() {
   for (const k in reservaTimers) {
@@ -431,7 +435,7 @@ function renderReservas(filterMode = null, weekRange = null) {
   const filtroEstado = document.getElementById("filtroEstado")?.value || "";
 
   const filas = reservas.filter(r => {
-    const rFecha = r.fechaReserva || r.fecha || "";
+    const rFecha = r.fecha || r.fechaReserva || "";
     if (filterMode === "week" && weekRange) {
       const dt = parseYMD(rFecha);
       if (!dt) return false;
@@ -473,8 +477,8 @@ function renderReservas(filterMode = null, weekRange = null) {
       <td>${rid}</td>
       <td>${r.nombreCliente || "-"}</td>
       <td>${r.numeroPersonas || "-"}</td>
-      <td>${(r.fechaReserva || r.fecha) || "-"}</td>
-      <td>${(r.horaReserva || r.hora) || "-"}</td>
+      <td>${(r.fecha || r.fechaReserva) || "-"}</td>
+      <td>${(r.hora || r.horaReserva) || "-"}</td>
       <td>${durDisplay}</td>
       <td>${mesaDisplay}</td>
       <td id="estado-cell-${rid}">${r.estado || "-"}</td>
@@ -487,14 +491,14 @@ function renderReservas(filterMode = null, weekRange = null) {
       <td class="text-center">
         <button class="btn btn-sm btn-outline-primary me-1" onclick="openEditReserva('${rid}')">Editar</button>
         <button class="btn btn-sm btn-success me-1" onclick="pagarReserva('${rid}')">Pagar</button>
-        <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete(() => deleteReserva('${rid}'))">Eliminar</button>
+        <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete(() => deleteReserva('${rid}'), '¿Eliminar reserva ${rid}?')">Eliminar</button>
       </td>
       `;
     } else {
       rowHtml += `<td class="text-center">
         <button class="btn btn-sm btn-outline-primary me-1" onclick="openEditReserva('${rid}')">Editar</button>
         <button class="btn btn-sm btn-success me-1" onclick="pagarReserva('${rid}')">Pagar</button>
-        <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete(() => deleteReserva('${rid}'))">Eliminar</button>
+        <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete(() => deleteReserva('${rid}'), '¿Eliminar reserva ${rid}?')">Eliminar</button>
       </td>`;
     }
 
@@ -515,7 +519,7 @@ function renderReservas(filterMode = null, weekRange = null) {
   });
 }
 
-/* ----------------- TIMERS (por reserva) ----------------- */
+/* ---------------- TIMERS POR RESERVA ---------------- */
 function startReservaTimer(reserva) {
   const rid = reserva.idReserva || reserva.id || "";
   const timerEl = document.getElementById(`timer-${rid}`);
@@ -523,7 +527,6 @@ function startReservaTimer(reserva) {
 
   if (reservaTimers[rid]) { try { clearInterval(reservaTimers[rid]); } catch (e) {} delete reservaTimers[rid]; }
 
-  // estados no temporizables
   if (reserva.estado === "Finalizada" || reserva.estado === "Cancelada") {
     timerEl.textContent = reserva.estado === "Finalizada" ? "Finalizada" : "";
     return;
@@ -533,11 +536,11 @@ function startReservaTimer(reserva) {
     const now = new Date();
     const reservas = getData("reservas") || [];
     const current = reservas.find(rr => (rr.idReserva === reserva.idReserva || rr.id === reserva.idReserva || rr.idReserva === reserva.id || rr.id === reserva.id));
-    if (!current) { timerEl.textContent = ""; clearInterval(reservaTimers[rid]); delete reservaTimers[rid]; return; }
+    if (!current) { timerEl.textContent = ""; try { clearInterval(reservaTimers[rid]); } catch(e){} delete reservaTimers[rid]; return; }
     reserva = current;
 
-    const fecha = reserva.fechaReserva || reserva.fecha;
-    const hora = reserva.horaReserva || reserva.hora;
+    const fecha = reserva.fecha || reserva.fechaReserva;
+    const hora = reserva.hora || reserva.horaReserva;
     const dur = Number(reserva.duracion || reserva.duracionReserva || 1);
     const start = parseDateTime(fecha, hora);
     if (!start) { timerEl.textContent = ""; return; }
@@ -547,9 +550,7 @@ function startReservaTimer(reserva) {
       const diff = start - now;
       timerEl.textContent = `Faltan: ${msToHMS(diff)}`;
     } else if (now >= start && now < end) {
-      // En curso
       if (reserva.estado !== "Confirmada") {
-        // marcar Confirmada y mesa ocupada
         const all = getData("reservas") || [];
         const idx = all.findIndex(a => a.idReserva === reserva.idReserva || a.id === reserva.idReserva || a.idReserva === reserva.id);
         if (idx >= 0) { all[idx].estado = "Confirmada"; saveData("reservas", all); }
@@ -563,7 +564,6 @@ function startReservaTimer(reserva) {
       const diff = end - now;
       timerEl.textContent = `En curso — termina en ${msToHMS(diff)}`;
     } else {
-      // terminado -> Finalizada + liberar mesa
       const all = getData("reservas") || [];
       const idx = all.findIndex(a => a.idReserva === reserva.idReserva || a.id === reserva.idReserva || a.idReserva === reserva.id);
       if (idx >= 0) { all[idx].estado = "Finalizada"; saveData("reservas", all); }
@@ -580,7 +580,7 @@ function startReservaTimer(reserva) {
   }, 1000);
 }
 
-/* ----------------- EDITAR / BORRAR RESERVAS ----------------- */
+/* ---------------- EDITAR / BORRAR RESERVAS ---------------- */
 function openEditReserva(id) {
   const reservas = getData("reservas") || [];
   const res = reservas.find(r => (r.idReserva === id || r.id === id));
@@ -591,8 +591,8 @@ function openEditReserva(id) {
   document.getElementById("resEditId").value = res.idReserva || res.id || "";
   document.getElementById("nombreCliente").value = res.nombreCliente || "";
   document.getElementById("numeroPersonas").value = res.numeroPersonas || "";
-  document.getElementById("fechaReserva").value = res.fechaReserva || res.fecha || "";
-  document.getElementById("horaReserva").value = res.horaReserva || res.hora || "";
+  document.getElementById("fechaReserva").value = res.fecha || res.fechaReserva || "";
+  document.getElementById("horaReserva").value = res.hora || res.horaReserva || "";
   document.getElementById("duracionReserva").value = res.duracion || res.duracionReserva || 1;
   populateMesaSelect(res.idMesaAsignada || res.idMesa || null);
   if (document.getElementById("idMesaAsignada")) document.getElementById("idMesaAsignada").value = res.idMesaAsignada || res.idMesa || "";
@@ -600,39 +600,36 @@ function openEditReserva(id) {
   if (document.getElementById("ocasionEspecial")) document.getElementById("ocasionEspecial").value = res.ocasionEspecial || "";
   if (document.getElementById("notasAdicionales")) document.getElementById("notasAdicionales").value = res.notasAdicionales || "";
 
-  new bootstrap.Modal(document.getElementById("modalReserva")).show();
+  try { new bootstrap.Modal(document.getElementById("modalReserva")).show(); } catch (e) {}
 }
 
 function deleteReserva(id) {
   let reservas = getData("reservas") || [];
-  // antes de eliminar, si la reserva era activa liberar mesa si no tiene otras reservas activas
   const target = reservas.find(r => (r.idReserva === id || r.id === id));
-  if (target) {
-    const mesaId = target.idMesaAsignada || target.idMesa;
-    // eliminar reserva
-    reservas = reservas.filter(r => !(r.idReserva === id || r.id === id));
-    saveData("reservas", reservas);
-    // comprobar si mesa necesita liberarse
-    if (mesaId) {
-      const otras = reservas.some(r => {
-        const rMesa = r.idMesaAsignada || r.idMesa;
-        if (!rMesa || rMesa !== mesaId) return false;
-        if (r.estado === "Cancelada" || r.estado === "Finalizada") return false;
-        return true;
-      });
-      if (!otras) {
-        const mesas = getData("mesas") || [];
-        const mi = mesas.findIndex(m => m.id === mesaId);
-        if (mi >= 0 && mesas[mi].estado !== "deshabilitada") { mesas[mi].estado = "disponible"; saveData("mesas", mesas); }
-      }
+  if (!target) { showAlert("Reserva no encontrada", "danger"); return; }
+
+  const mesaId = target.idMesaAsignada || target.idMesa;
+  reservas = reservas.filter(r => !(r.idReserva === id || r.id === id));
+  saveData("reservas", reservas);
+
+  if (mesaId) {
+    const otras = reservas.some(r => {
+      const rMesa = r.idMesaAsignada || r.idMesa;
+      if (!rMesa || rMesa !== mesaId) return false;
+      if (r.estado === "Cancelada" || r.estado === "Finalizada") return false;
+      return true;
+    });
+    if (!otras) {
+      const mesas = getData("mesas") || [];
+      const mi = mesas.findIndex(m => m.id === mesaId);
+      if (mi >= 0 && mesas[mi].estado !== "deshabilitada") { mesas[mi].estado = "disponible"; saveData("mesas", mesas); }
     }
-    showAlert("Reserva eliminada", "success");
-    renderReservas();
-    populateMesaSelect();
-    renderMesas();
-  } else {
-    showAlert("Reserva no encontrada", "danger");
   }
+
+  showAlert("Reserva eliminada", "success");
+  renderReservas();
+  populateMesaSelect();
+  renderMesas();
 }
 
 function pagarReserva(id) {
@@ -653,7 +650,7 @@ function pagarReserva(id) {
   showAlert("Reserva pagada y mesa liberada (si corresponde)", "success");
 }
 
-/* ----------------- BIND FORM RESERVA ----------------- */
+/* ---------------- BIND FORM RESERVA ---------------- */
 (function bindFormReserva() {
   const form = document.getElementById("formReserva");
   if (!form) return;
@@ -669,7 +666,6 @@ function pagarReserva(id) {
     const el = document.getElementById(id); if (el) el.addEventListener("change", refreshAvailableMesasForForm);
   });
 
-  // si venimos desde plano con preselección
   document.addEventListener("DOMContentLoaded", () => {
     if (document.body.dataset.page === "reservas") {
       const mesaSel = localStorage.getItem("mesaSeleccionada");
@@ -678,7 +674,7 @@ function pagarReserva(id) {
         form.reset(); clearAllValidation(form); if (document.getElementById("resEditId")) document.getElementById("resEditId").value = "";
         populateMesaSelect(mesaSel);
         setTimeout(() => { if (document.getElementById("idMesaAsignada")) document.getElementById("idMesaAsignada").value = mesaSel; }, 0);
-        new bootstrap.Modal(document.getElementById("modalReserva")).show();
+        try { new bootstrap.Modal(document.getElementById("modalReserva")).show(); } catch (e) {}
       }
     }
   });
@@ -725,21 +721,33 @@ function pagarReserva(id) {
     if (!numEl || !numEl.value || Number(numEl.value) <= 0) { setInvalid(numEl, "Número de personas inválido"); ok = false; } else clearInvalid(numEl);
 
     if (!fechaEl || !fechaEl.value) { setInvalid(fechaEl, "La fecha es obligatoria"); ok = false; } else {
+      const fechaSolo = parseYMD(fechaEl.value);
       const hoy = new Date(); hoy.setHours(0,0,0,0);
-      const f = parseYMD(fechaEl.value);
-      if (!f || f < hoy) { setInvalid(fechaEl, "La fecha no puede ser en el pasado"); ok = false; } else clearInvalid(fechaEl);
+      if (!fechaSolo) { setInvalid(fechaEl, "Fecha inválida"); ok = false; }
+      else if (fechaSolo < hoy) { setInvalid(fechaEl, "La fecha no puede ser anterior a hoy"); ok = false; } else clearInvalid(fechaEl);
     }
 
     if (!horaEl || !horaEl.value) { setInvalid(horaEl, "La hora es obligatoria"); ok = false; } else {
       const [hh, mm] = horaEl.value.split(":").map(Number);
-      // VALIDACIÓN: hora entre 08:00 y 11:00 (inclusive 08:00 y 11:00 exacto)
-      if (isNaN(hh) || hh < 8 || hh > 11 || (hh === 11 && mm > 0)) { setInvalid(horaEl, "La hora debe estar entre 08:00 y 11:00"); ok = false; } else clearInvalid(horaEl);
+      // Validación horario 08:00 - 00:00 (aceptamos 00:00 exacto como límite)
+      const valid = !(isNaN(hh) || isNaN(mm)) && ((hh >= 8 && hh <= 23) || (hh === 0 && mm === 0));
+      if (!valid) { setInvalid(horaEl, "La hora debe estar entre 08:00 y 00:00"); ok = false; } else clearInvalid(horaEl);
     }
 
     if (!durEl || !durEl.value || Number(durEl.value) <= 0) { setInvalid(durEl, "Duración inválida"); ok = false; } else clearInvalid(durEl);
     if (!mesaEl || !mesaEl.value) { setInvalid(mesaEl, "Selecciona una mesa"); ok = false; } else clearInvalid(mesaEl);
     if (!estadoEl || !estadoEl.value) { setInvalid(estadoEl, "Selecciona un estado"); ok = false; } else clearInvalid(estadoEl);
     if (!ok) { showAlert("Corrige los errores antes de guardar", "danger"); return; }
+
+    // validación permitir reservar hoy si hora futura
+    const fechaSolo = parseYMD(fechaEl.value);
+    const ahora = new Date();
+    const fechaHora = parseDateTime(fechaEl.value, horaEl.value);
+    if (!fechaSolo || !fechaHora) { showAlert("Fecha/hora inválida", "danger"); return; }
+    const hoy = new Date(); hoy.setHours(0,0,0,0);
+    if (fechaSolo.getTime() === hoy.getTime()) {
+      if (fechaHora <= ahora) { showAlert("Si la reserva es para hoy, la hora debe ser posterior a la actual", "danger"); return; }
+    }
 
     // capacidad
     const mesas = getData("mesas") || [];
@@ -754,14 +762,13 @@ function pagarReserva(id) {
     let reservas = getData("reservas") || [];
 
     if (id) {
-      // edición: si cambia mesa, liberar la anterior (si no tiene otras activas)
       const idx = reservas.findIndex(r => (r.idReserva === id || r.id === id));
       if (idx >= 0) {
         const prevMesa = reservas[idx].idMesaAsignada || reservas[idx].idMesa;
         reservas[idx].nombreCliente = nombreEl.value;
         reservas[idx].numeroPersonas = Number(numEl.value);
-        reservas[idx].fechaReserva = fecha;
-        reservas[idx].horaReserva = hora;
+        reservas[idx].fecha = fecha;
+        reservas[idx].hora = hora;
         reservas[idx].duracion = Number(dur);
         reservas[idx].idMesaAsignada = mesaEl.value;
         reservas[idx].estado = estadoEl.value;
@@ -770,7 +777,6 @@ function pagarReserva(id) {
         saveData("reservas", reservas);
 
         if (prevMesa && prevMesa !== mesaEl.value) {
-          // revisar si prevMesa tiene otras reservas activas
           const otras = reservas.some(r => {
             const rMesa = r.idMesaAsignada || r.idMesa;
             if (!rMesa || rMesa !== prevMesa) return false;
@@ -784,7 +790,6 @@ function pagarReserva(id) {
             saveData("mesas", mesasArr);
           }
         }
-        // asegurar nueva mesa marcada ocupada
         const mesasArr2 = getData("mesas") || [];
         const nmi = mesasArr2.findIndex(m => m.id === mesaEl.value);
         if (nmi >= 0 && mesasArr2[nmi].estado !== "deshabilitada") { mesasArr2[nmi].estado = "ocupada"; saveData("mesas", mesasArr2); }
@@ -794,7 +799,6 @@ function pagarReserva(id) {
         return;
       }
     } else {
-      // nueva reserva
       const newRes = {
         idReserva: generateReservaId(),
         nombreCliente: nombreEl.value,
@@ -809,7 +813,6 @@ function pagarReserva(id) {
       };
       reservas.push(newRes);
       saveData("reservas", reservas);
-      // marcar mesa ocupada inmediatamente
       const mesasArr = getData("mesas") || [];
       const mi = mesasArr.findIndex(m => m.id === newRes.idMesaAsignada);
       if (mi >= 0 && mesasArr[mi].estado !== "deshabilitada") { mesasArr[mi].estado = "ocupada"; saveData("mesas", mesasArr); }
@@ -825,7 +828,7 @@ function pagarReserva(id) {
   });
 })();
 
-/* ----------------- FILTROS RÁPIDOS ----------------- */
+/* ---------------- FILTROS RÁPIDOS ---------------- */
 (function bindQuickFilters() {
   const btnHoy = document.getElementById("btnHoy");
   const btnManana = document.getElementById("btnMañana");
@@ -843,7 +846,7 @@ function pagarReserva(id) {
   if (filtroEstado) filtroEstado.addEventListener("change", () => renderReservas());
 })();
 
-/* ----------------- FORM MESA BIND ----------------- */
+/* ---------------- BIND FORM MESA ---------------- */
 (function bindFormMesa() {
   const form = document.getElementById("formMesa");
   if (!form) return;
@@ -917,19 +920,12 @@ function pagarReserva(id) {
   });
 })();
 
-/* ----------------- INICIALIZACIÓN ----------------- */
+/* ---------------- INICIALIZACIÓN ---------------- */
 document.addEventListener("DOMContentLoaded", () => {
-  // seed si no existen
-  if (!localStorage.getItem("mesas")) {
-    resetMesas();
-  } else {
-    // forzar que capacidades sean números
+  if (!localStorage.getItem("mesas")) resetMesas();
+  else {
     const ms = getData("mesas") || [];
-    if (ms.length) {
-      ms.forEach(m => { m.capacidad = Number(m.capacidad || 0); });
-      renumberMesas(ms);
-      saveData("mesas", ms);
-    }
+    if (ms.length) { ms.forEach(m => m.capacidad = Number(m.capacidad || 0)); renumberMesas(ms); saveData("mesas", ms); }
   }
   if (!localStorage.getItem("reservas")) saveData("reservas", []);
 
@@ -946,7 +942,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (document.getElementById("mesaEditId")) document.getElementById("mesaEditId").value = "";
         const estadoWrapper = document.getElementById("estadoMesaGroup");
         if (estadoWrapper) estadoWrapper.style.display = "none";
-        new bootstrap.Modal(document.getElementById("modalMesa")).show();
+        try { new bootstrap.Modal(document.getElementById("modalMesa")).show(); } catch (e) {}
       });
     }
   }
@@ -959,13 +955,12 @@ document.addEventListener("DOMContentLoaded", () => {
       if (form) { form.reset(); clearAllValidation(form); }
       populateMesaSelect(mesaSel);
       setTimeout(() => { if (document.getElementById("idMesaAsignada")) document.getElementById("idMesaAsignada").value = mesaSel; }, 0);
-      new bootstrap.Modal(document.getElementById("modalReserva")).show();
+      try { new bootstrap.Modal(document.getElementById("modalReserva")).show(); } catch (e) {}
     }
     populateMesaSelect();
     renderReservas();
   }
 
-  // limpiar form al cerrar modal reserva
   const modalRes = document.getElementById("modalReserva");
   if (modalRes) modalRes.addEventListener("hidden.bs.modal", () => {
     const form = document.getElementById("formReserva");
@@ -974,9 +969,7 @@ document.addEventListener("DOMContentLoaded", () => {
     populateMesaSelect();
   });
 });
-/* ===================== FIN app.js ===================== */
-
-
+/* ================= FIN app.js ================= */
 
 
 
