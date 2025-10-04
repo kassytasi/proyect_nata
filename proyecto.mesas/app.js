@@ -112,9 +112,9 @@ function formatMesaNumero(n) { return String(n || 0).padStart(2, "0"); }
 /* ----------------- RESET MESAS (limpiar datos inconsistentes) ----------------- */
 function resetMesas() {
   const mesasIniciales = [
-    { id: "mesa01", capacidad: 2, ubicacion: "Ventana", estado: "disponible" },
+    { id: "mesa01", capacidad: 2, ubicacion: "Ventana", estado: "ocupada" },
     { id: "mesa02", capacidad: 4, ubicacion: "Centro", estado: "disponible" },
-    { id: "mesa03", capacidad: 6, ubicacion: "Jardín", estado: "disponible" },
+    { id: "mesa03", capacidad: 6, ubicacion: "Jardín", estado: "deshabilitada" },
     { id: "mesa04", capacidad: 8, ubicacion: "Terraza", estado: "disponible" },
     { id: "mesa05", capacidad: 10, ubicacion: "VIP", estado: "disponible" },
   ];
