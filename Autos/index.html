@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Neon Rush — Hypercars 2084</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header>
+    <div class="logo">NEON RUSH</div>
+    <nav>
+      <a href="index.html">Inicio</a>
+      <a href="vehiculos.html">Vehículos</a>
+      <a href="circuitos.html">Circuitos</a>
+    </nav>
+
+    <!-- Audio controls (visible) -->
+    <div class="audio-controls">
+      <button id="audio-toggle" aria-pressed="false" title="Activar/Desactivar sonido">🔊</button>
+      <label class="vol">
+        <input id="audio-volume" type="range" min="0" max="1" step="0.01" value="0.18" />
+      </label>
+    </div>
+  </header>
+
+  <main>
+    <section id="home" class="hero">
+      <h1 class="title">Neon Rush — Hypercars 2084</h1>
+      <p class="lead">Velocidad en cuatro ruedas, neón en la ciudad. Practica animaciones y diseño con estos vehículos y pistas urbanas futuristas.</p>
+      <div class="hero-cta">
+        <!-- Este botón arranca la reproducción ambiental si existe el audio -->
+        <a class="btn-play" id="btn-play" href="vehiculos.html">▶ Ver Vehículos</a>
+        <a class="btn-ghost" href="circuitos.html">Ver Circuitos</a>
+      </div>
+    </section>
+
+    <section id="vehiculos" class="section">
+      <h2>Vehículos</h2>
+      <div class="grid" id="vehiculos-grid" aria-live="polite"></div>
+    </section>
+
+    <section id="circuitos" class="section">
+      <h2>Circuitos</h2>
+      <div class="list" id="circuitos-list" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <footer>© Neon Rush — Proyecto educativo</footer>
+
+  <!-- audio file placeholder:
+       - Coloca tu pista en /assets/ambient.mp3 o cambia la ruta en script.js variable ambientSrc.
+       - El archivo puede ser un loop suave (motor/zumbido). -->
+  <audio id="ambient-audio" loop preload="none" src="assets/ambient.mp3" aria-hidden="true"></audio>
+
+  <script src="script.js"></script>
+</body>
+</html>
