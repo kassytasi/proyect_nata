@@ -1,10 +1,14 @@
-/* ================= app.js (COMPLETO) ================= */
 
 /* ---------------- UTILIDADES ---------------- */
 function getData(key) {
   try { return JSON.parse(localStorage.getItem(key) || "[]"); } catch (e) { return []; }
 }
 function saveData(key, data) { localStorage.setItem(key, JSON.stringify(data)); }
+
+/* ---------------- GLOBALS / PROTECCIONES ---------------- */
+/* Evita alertas duplicadas y múltiples intervalos automáticos */
+const __APP_ACTIVE_ALERTS = new Set();
+let __APP_AUTO_CHECK_ID = null;
 
 /* IDs */
 function generateMesaShortId() {
@@ -27,17 +31,53 @@ function generateReservaId() {
   return "R" + String(max + 1).padStart(3, "0");
 }
 
-/* ---------------- ALERTAS (bootstrap) ---------------- */
+/* ---------------- ALERTAS (bootstrap) - DEDUPLICACIÓN ---------------- */
 function showAlert(msg, type = "info", ms = 3500) {
   const area = document.getElementById("alertContainer") || document.getElementById("alertBox");
   if (!area) { console.log(`[${type}] ${msg}`); return; }
+
+  const key = `${type}::${msg}`;
+  if (__APP_ACTIVE_ALERTS.has(key)) return; // ya mostrado
+  __APP_ACTIVE_ALERTS.add(key);
+
   const el = document.createElement("div");
   const map = { info: "info", success: "success", danger: "danger", warning: "warning" };
   el.className = `alert alert-${map[type] || "info"} alert-dismissible fade show`;
   el.setAttribute("role", "alert");
-  el.innerHTML = `${msg} <button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+  el.innerHTML = `${msg} <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`;
   area.appendChild(el);
-  setTimeout(() => { try { el.remove(); } catch (e) {} }, ms);
+
+  // Función de limpieza
+  const cleanup = () => {
+    try { el.remove(); } catch (e) {}
+    __APP_ACTIVE_ALERTS.delete(key);
+  };
+
+  // Eliminar al cerrar manualmente
+  const btnClose = el.querySelector(".btn-close");
+  if (btnClose) {
+    btnClose.addEventListener("click", () => {
+      // bootstrap removerá el alert DOM; nos aseguramos de limpiar la referencia
+      setTimeout(cleanup, 50);
+    });
+  }
+
+  // Timeout para autodestruir
+  const t = setTimeout(() => {
+    try {
+      // Si bootstrap tiene método para cerrar la alerta, dispararlo
+      try { const bsAlert = bootstrap.Alert.getInstance(el); if (bsAlert) bsAlert.close(); } catch (ee) {}
+      cleanup();
+    } catch (e) {
+      cleanup();
+    }
+  }, ms);
+
+  // Cuando el elemento se quite por cualquier causa, limpiar SET
+  el.addEventListener("DOMNodeRemoved", () => {
+    clearTimeout(t);
+    __APP_ACTIVE_ALERTS.delete(key);
+  });
 }
 
 /* ---------------- VALIDACIÓN UI ---------------- */
@@ -153,7 +193,7 @@ function confirmDelete(action, message = null) {
   try {
     new bootstrap.Modal(document.getElementById("confirmModal")).show();
   } catch (e) {
-    // fallback
+    // fallback: ejecutar acción si modal no disponible
     if (typeof _pendingDeleteAction === "function") { try { _pendingDeleteAction(); } catch (er) {} }
     _pendingDeleteAction = null;
   }
@@ -169,6 +209,7 @@ document.addEventListener("click", (ev) => {
 });
 
 /* ---------------- SINCRONIZACIÓN POR TIEMPO ---------------- */
+/* Actualiza estados de reservas por el tiempo actual; devuelve true si hubo cambios */
 function actualizarReservasPorTiempo() {
   const reservas = getData("reservas") || [];
   const mesas = getData("mesas") || [];
@@ -202,16 +243,24 @@ function actualizarReservasPorTiempo() {
   return changed;
 }
 
-/* Auto-check y recarga si hubo cambios */
+/* Auto-check mejorado: NO recargar la página para evitar bucles y alertas repetidas */
 (function startAutoCheckAndReload() {
-  // sync immediate
+  // No crear múltiples intervals
+  if (__APP_AUTO_CHECK_ID) return;
+
+  // sync immediate (si cambia, actualiza vistas en lugar de recargar)
   if (actualizarReservasPorTiempo()) {
-    try { location.reload(); } catch (e) {}
-    return;
+    try { renderReservas(); renderMesas(); } catch (e) {}
   }
-  setInterval(() => {
-    if (actualizarReservasPorTiempo()) {
-      try { location.reload(); } catch (e) {}
+
+  __APP_AUTO_CHECK_ID = setInterval(() => {
+    try {
+      if (actualizarReservasPorTiempo()) {
+        renderReservas();
+        renderMesas();
+      }
+    } catch (e) {
+      console.error("Error en auto-check:", e);
     }
   }, 60000);
 })();
@@ -227,6 +276,7 @@ function renderMesas() {
     mesas = getData("mesas") || [];
   }
 
+  // sincroniza antes de renderizar
   actualizarReservasPorTiempo();
   mesas = getData("mesas") || [];
   mesas.forEach(m => m.capacidad = Number(m.capacidad || 0));
@@ -410,6 +460,7 @@ let reservaTimers = {};
 function clearAllReservaTimers() {
   for (const k in reservaTimers) {
     try { clearInterval(reservaTimers[k]); } catch (e) {}
+    try { delete reservaTimers[k]; } catch(e) {}
   }
   reservaTimers = {};
 }
@@ -525,7 +576,11 @@ function startReservaTimer(reserva) {
   const timerEl = document.getElementById(`timer-${rid}`);
   if (!timerEl) return;
 
-  if (reservaTimers[rid]) { try { clearInterval(reservaTimers[rid]); } catch (e) {} delete reservaTimers[rid]; }
+  // Asegura no duplicar intervalos para el mismo rid
+  if (reservaTimers[rid]) {
+    try { clearInterval(reservaTimers[rid]); } catch (e) {}
+    delete reservaTimers[rid];
+  }
 
   if (reserva.estado === "Finalizada" || reserva.estado === "Cancelada") {
     timerEl.textContent = reserva.estado === "Finalizada" ? "Finalizada" : "";
@@ -551,19 +606,25 @@ function startReservaTimer(reserva) {
       timerEl.textContent = `Faltan: ${msToHMS(diff)}`;
     } else if (now >= start && now < end) {
       if (reserva.estado !== "Confirmada") {
+        // Actualiza estado en almacenamiento una única vez
         const all = getData("reservas") || [];
         const idx = all.findIndex(a => a.idReserva === reserva.idReserva || a.id === reserva.idReserva || a.idReserva === reserva.id);
-        if (idx >= 0) { all[idx].estado = "Confirmada"; saveData("reservas", all); }
+        if (idx >= 0) {
+          all[idx].estado = "Confirmada";
+          saveData("reservas", all);
+        }
         const mesas = getData("mesas") || [];
         const mi = mesas.findIndex(mm => mm.id === (reserva.idMesaAsignada || reserva.idMesa));
         if (mi >= 0 && mesas[mi].estado !== "deshabilitada") { mesas[mi].estado = "ocupada"; saveData("mesas", mesas); }
         const estadoCell = document.getElementById(`estado-cell-${rid}`);
         if (estadoCell) estadoCell.textContent = "Confirmada";
+        // Actualiza vista de mesas sin recargar para evitar efectos colaterales
         renderMesas();
       }
       const diff = end - now;
       timerEl.textContent = `En curso — termina en ${msToHMS(diff)}`;
     } else {
+      // finalizada
       const all = getData("reservas") || [];
       const idx = all.findIndex(a => a.idReserva === reserva.idReserva || a.id === reserva.idReserva || a.idReserva === reserva.id);
       if (idx >= 0) { all[idx].estado = "Finalizada"; saveData("reservas", all); }
@@ -571,9 +632,14 @@ function startReservaTimer(reserva) {
       const mi = mesas.findIndex(mm => mm.id === (reserva.idMesaAsignada || reserva.idMesa));
       if (mi >= 0 && mesas[mi].estado !== "deshabilitada") { mesas[mi].estado = "disponible"; saveData("mesas", mesas); }
       timerEl.textContent = "Finalizada";
+
+      // Mostrar alerta de finalización (deduplicada por showAlert)
       showAlert(`Reserva ${reserva.idReserva || reserva.id} finalizada. Mesa liberada.`, "info");
+
       try { clearInterval(reservaTimers[rid]); } catch (e) {}
       delete reservaTimers[rid];
+
+      // Actualizar vistas (sin recargar)
       renderReservas();
       renderMesas();
     }
@@ -970,6 +1036,8 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 /* ================= FIN app.js ================= */
+
+
 
 
 
