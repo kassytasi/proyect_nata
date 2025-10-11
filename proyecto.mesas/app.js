@@ -1,12 +1,10 @@
 
-/* ---------------- UTILIDADES ---------------- */
 function getData(key) {
   try { return JSON.parse(localStorage.getItem(key) || "[]"); } catch (e) { return []; }
 }
 function saveData(key, data) { localStorage.setItem(key, JSON.stringify(data)); }
 
-/* ---------------- GLOBALS / PROTECCIONES ---------------- */
-/* Evita alertas duplicadas y múltiples intervalos automáticos */
+
 const __APP_ACTIVE_ALERTS = new Set();
 let __APP_AUTO_CHECK_ID = null;
 
@@ -32,51 +30,110 @@ function generateReservaId() {
 }
 
 /* ---------------- ALERTAS (bootstrap) - DEDUPLICACIÓN ---------------- */
-function showAlert(msg, type = "info", ms = 3500) {
-  const area = document.getElementById("alertContainer") || document.getElementById("alertBox");
-  if (!area) { console.log(`[${type}] ${msg}`); return; }
 
-  const key = `${type}::${msg}`;
-  if (__APP_ACTIVE_ALERTS.has(key)) return; // ya mostrado
+function showAlert(msg, type = "info", ms = 3500) {
+  if (!msg && msg !== 0) return;
+  const map = { info: "info", success: "success", danger: "danger", warning: "warning" };
+  // Normalizar tipo para clases y nuestra lógica
+  let tt = String(type || "info").toLowerCase();
+  if (tt === "exito" || tt === "éxito" || tt === "success") tt = "success";
+  if (tt === "error" || tt === "danger") tt = "danger";
+  if (tt === "advertencia" || tt === "warning") tt = "warning";
+  if (tt === "info") tt = "info";
+
+  const key = `${tt}::${String(msg)}`;
+
+  // Dedupe: si ya existe exacto, no volver a mostrar
+  if (__APP_ACTIVE_ALERTS.has(key)) return;
+
+  // Buscar contenedor existente
+  let area = document.getElementById("alertContainer") || document.getElementById("alertBox");
+  // Si no hay contenedor, crear uno fijo arriba-derecha
+  if (!area) {
+    area = document.createElement("div");
+    area.id = "alertContainer";
+    // estilos mínimos para posicionarlo si no tienes CSS para esto
+    area.style.position = "fixed";
+    area.style.top = "20px";
+    area.style.right = "20px";
+    area.style.zIndex = 9999;
+    area.style.display = "flex";
+    area.style.flexDirection = "column";
+    area.style.gap = "10px";
+    document.body.appendChild(area);
+  }
+
+  // Marca como activo para evitar duplicados (hasta que se elimine)
   __APP_ACTIVE_ALERTS.add(key);
 
+  // Crear elemento alerta (Bootstrap-compatible markup)
   const el = document.createElement("div");
-  const map = { info: "info", success: "success", danger: "danger", warning: "warning" };
-  el.className = `alert alert-${map[type] || "info"} alert-dismissible fade show`;
+  const bsClass = `alert alert-${map[tt] || "info"} alert-dismissible fade show`;
+  el.className = bsClass;
   el.setAttribute("role", "alert");
+  // insertar contenido y botón cerrar (mantener compatibilidad)
   el.innerHTML = `${msg} <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`;
+
+  // Añadir a contenedor
   area.appendChild(el);
 
-  // Función de limpieza
+  // Timeout para autodestruir (con limpieza)
+  let closed = false;
   const cleanup = () => {
+    if (closed) return;
+    closed = true;
     try { el.remove(); } catch (e) {}
     __APP_ACTIVE_ALERTS.delete(key);
   };
 
-  // Eliminar al cerrar manualmente
+  // Manejo botón cerrar (bootstrap o fallback)
   const btnClose = el.querySelector(".btn-close");
   if (btnClose) {
     btnClose.addEventListener("click", () => {
-      // bootstrap removerá el alert DOM; nos aseguramos de limpiar la referencia
+      // permitir que bootstrap haga su trabajo si está presente
       setTimeout(cleanup, 50);
     });
   }
 
-  // Timeout para autodestruir
-  const t = setTimeout(() => {
+  // Si bootstrap está presente y tiene API, intentar usarla para cerrar
+  const autoClose = setTimeout(() => {
     try {
-      // Si bootstrap tiene método para cerrar la alerta, dispararlo
-      try { const bsAlert = bootstrap.Alert.getInstance(el); if (bsAlert) bsAlert.close(); } catch (ee) {}
-      cleanup();
+      // si existe instancia bootstrap para ese elemento, usar close()
+      if (typeof bootstrap !== "undefined" && bootstrap.Alert && typeof bootstrap.Alert.getInstance === "function") {
+        try {
+          const inst = bootstrap.Alert.getOrCreateInstance(el);
+          if (inst && typeof inst.close === "function") {
+            inst.close();
+          } else {
+            cleanup();
+          }
+        } catch (e) {
+          cleanup();
+        }
+      } else {
+        // fallback: simplemente eliminar
+        cleanup();
+      }
     } catch (e) {
       cleanup();
     }
-  }, ms);
+  }, (typeof ms === "number" && ms > 0) ? ms : 3500);
 
-  // Cuando el elemento se quite por cualquier causa, limpiar SET
+  // Asegurar limpieza si el elemento es removido por otra causa
+  const observer = new MutationObserver(() => {
+    if (!document.body.contains(el)) {
+      clearTimeout(autoClose);
+      __APP_ACTIVE_ALERTS.delete(key);
+      try { observer.disconnect(); } catch (e) {}
+    }
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+
+  // Evento DOMNodeRemoved adicional (compatibilidad con navegadores/implementaciones)
   el.addEventListener("DOMNodeRemoved", () => {
-    clearTimeout(t);
+    clearTimeout(autoClose);
     __APP_ACTIVE_ALERTS.delete(key);
+    try { observer.disconnect(); } catch (e) {}
   });
 }
 
@@ -634,7 +691,10 @@ function startReservaTimer(reserva) {
       timerEl.textContent = "Finalizada";
 
       // Mostrar alerta de finalización (deduplicada por showAlert)
-      showAlert(`Reserva ${reserva.idReserva || reserva.id} finalizada. Mesa liberada.`, "info");
+      // FIX: evitar "undefined" mostrando nombre seguro o mensaje genérico
+      const displayName = reserva?.nombreCliente || reserva?.nombre || reserva?.idReserva || reserva?.id || "";
+      const mensaje = displayName ? `Reserva ${displayName} finalizada. Mesa liberada.` : `Reserva finalizada. Mesa liberada.`;
+      showAlert(mensaje, "info");
 
       try { clearInterval(reservaTimers[rid]); } catch (e) {}
       delete reservaTimers[rid];
@@ -1021,7 +1081,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (form) { form.reset(); clearAllValidation(form); }
       populateMesaSelect(mesaSel);
       setTimeout(() => { if (document.getElementById("idMesaAsignada")) document.getElementById("idMesaAsignada").value = mesaSel; }, 0);
-      try { new bootstrap.Modal(document.getElementById("modalReserva")).show(); } catch (e) {}
+      try { new bootstrap.Modal.getInstance(document.getElementById("modalReserva")).show(); } catch (e) {}
     }
     populateMesaSelect();
     renderReservas();
@@ -1035,7 +1095,8 @@ document.addEventListener("DOMContentLoaded", () => {
     populateMesaSelect();
   });
 });
-/* ================= FIN app.js ================= */
+
+
 
 
 
