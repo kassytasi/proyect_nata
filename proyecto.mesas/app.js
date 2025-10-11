@@ -1,4 +1,3 @@
-
 function getData(key) {
   try { return JSON.parse(localStorage.getItem(key) || "[]"); } catch (e) { return []; }
 }
@@ -34,6 +33,7 @@ function generateReservaId() {
 function showAlert(msg, type = "info", ms = 3500) {
   if (!msg && msg !== 0) return;
   const map = { info: "info", success: "success", danger: "danger", warning: "warning" };
+  // Normalizar tipo para clases y nuestra lógica
   let tt = String(type || "info").toLowerCase();
   if (tt === "exito" || tt === "éxito" || tt === "success") tt = "success";
   if (tt === "error" || tt === "danger") tt = "danger";
@@ -41,12 +41,17 @@ function showAlert(msg, type = "info", ms = 3500) {
   if (tt === "info") tt = "info";
 
   const key = `${tt}::${String(msg)}`;
+
+  // Dedupe: si ya existe exacto, no volver a mostrar
   if (__APP_ACTIVE_ALERTS.has(key)) return;
 
+  // Buscar contenedor existente
   let area = document.getElementById("alertContainer") || document.getElementById("alertBox");
+  // Si no hay contenedor, crear uno fijo arriba-derecha
   if (!area) {
     area = document.createElement("div");
     area.id = "alertContainer";
+    // estilos mínimos para posicionarlo si no tienes CSS para esto
     area.style.position = "fixed";
     area.style.top = "20px";
     area.style.right = "20px";
@@ -57,15 +62,21 @@ function showAlert(msg, type = "info", ms = 3500) {
     document.body.appendChild(area);
   }
 
+  // Marca como activo para evitar duplicados (hasta que se elimine)
   __APP_ACTIVE_ALERTS.add(key);
 
+  // Crear elemento alerta (Bootstrap-compatible markup)
   const el = document.createElement("div");
   const bsClass = `alert alert-${map[tt] || "info"} alert-dismissible fade show`;
   el.className = bsClass;
   el.setAttribute("role", "alert");
+  // insertar contenido y botón cerrar (mantener compatibilidad)
   el.innerHTML = `${msg} <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`;
+
+  // Añadir a contenedor
   area.appendChild(el);
 
+  // Timeout para autodestruir (con limpieza)
   let closed = false;
   const cleanup = () => {
     if (closed) return;
@@ -74,25 +85,40 @@ function showAlert(msg, type = "info", ms = 3500) {
     __APP_ACTIVE_ALERTS.delete(key);
   };
 
+  // Manejo botón cerrar (bootstrap o fallback)
   const btnClose = el.querySelector(".btn-close");
   if (btnClose) {
-    btnClose.addEventListener("click", () => { setTimeout(cleanup, 50); });
+    btnClose.addEventListener("click", () => {
+      // permitir que bootstrap haga su trabajo si está presente
+      setTimeout(cleanup, 50);
+    });
   }
 
+  // Si bootstrap está presente y tiene API, intentar usarla para cerrar
   const autoClose = setTimeout(() => {
     try {
+      // si existe instancia bootstrap para ese elemento, usar close()
       if (typeof bootstrap !== "undefined" && bootstrap.Alert && typeof bootstrap.Alert.getInstance === "function") {
         try {
           const inst = bootstrap.Alert.getOrCreateInstance(el);
-          if (inst && typeof inst.close === "function") inst.close();
-          else cleanup();
-        } catch (e) { cleanup(); }
+          if (inst && typeof inst.close === "function") {
+            inst.close();
+          } else {
+            cleanup();
+          }
+        } catch (e) {
+          cleanup();
+        }
       } else {
+        // fallback: simplemente eliminar
         cleanup();
       }
-    } catch (e) { cleanup(); }
+    } catch (e) {
+      cleanup();
+    }
   }, (typeof ms === "number" && ms > 0) ? ms : 3500);
 
+  // Asegurar limpieza si el elemento es removido por otra causa
   const observer = new MutationObserver(() => {
     if (!document.body.contains(el)) {
       clearTimeout(autoClose);
@@ -102,6 +128,7 @@ function showAlert(msg, type = "info", ms = 3500) {
   });
   observer.observe(document.body, { childList: true, subtree: true });
 
+  // Evento DOMNodeRemoved adicional (compatibilidad con navegadores/implementaciones)
   el.addEventListener("DOMNodeRemoved", () => {
     clearTimeout(autoClose);
     __APP_ACTIVE_ALERTS.delete(key);
@@ -222,6 +249,7 @@ function confirmDelete(action, message = null) {
   try {
     new bootstrap.Modal(document.getElementById("confirmModal")).show();
   } catch (e) {
+    // fallback: ejecutar acción si modal no disponible
     if (typeof _pendingDeleteAction === "function") { try { _pendingDeleteAction(); } catch (er) {} }
     _pendingDeleteAction = null;
   }
@@ -273,8 +301,10 @@ function actualizarReservasPorTiempo() {
 
 /* Auto-check mejorado: NO recargar la página para evitar bucles y alertas repetidas */
 (function startAutoCheckAndReload() {
+  // No crear múltiples intervals
   if (__APP_AUTO_CHECK_ID) return;
 
+  // sync immediate (si cambia, actualiza vistas en lugar de recargar)
   if (actualizarReservasPorTiempo()) {
     try { renderReservas(); renderMesas(); } catch (e) {}
   }
@@ -302,6 +332,7 @@ function renderMesas() {
     mesas = getData("mesas") || [];
   }
 
+  // sincroniza antes de renderizar
   actualizarReservasPorTiempo();
   mesas = getData("mesas") || [];
   mesas.forEach(m => m.capacidad = Number(m.capacidad || 0));
@@ -895,6 +926,7 @@ function pagarReserva(id) {
 
     if (!horaEl || !horaEl.value) { setInvalid(horaEl, "La hora es obligatoria"); ok = false; } else {
       const [hh, mm] = horaEl.value.split(":").map(Number);
+      // Validación horario 08:00 - 00:00 (aceptamos 00:00 exacto como límite)
       const valid = !(isNaN(hh) || isNaN(mm)) && ((hh >= 8 && hh <= 23) || (hh === 0 && mm === 0));
       if (!valid) { setInvalid(horaEl, "La hora debe estar entre 08:00 y 00:00"); ok = false; } else clearInvalid(horaEl);
     }
@@ -904,6 +936,7 @@ function pagarReserva(id) {
     if (!estadoEl || !estadoEl.value) { setInvalid(estadoEl, "Selecciona un estado"); ok = false; } else clearInvalid(estadoEl);
     if (!ok) { showAlert("Corrige los errores antes de guardar", "danger"); return; }
 
+    // validación permitir reservar hoy si hora futura
     const fechaSolo = parseYMD(fechaEl.value);
     const ahora = new Date();
     const fechaHora = parseDateTime(fechaEl.value, horaEl.value);
@@ -913,11 +946,13 @@ function pagarReserva(id) {
       if (fechaHora <= ahora) { showAlert("Si la reserva es para hoy, la hora debe ser posterior a la actual", "danger"); return; }
     }
 
+    // capacidad
     const mesas = getData("mesas") || [];
     const mesaSel = mesas.find(m => m.id === mesaEl.value);
     if (!mesaSel) { showAlert("Mesa inválida", "danger"); return; }
     if (Number(numEl.value) > Number(mesaSel.capacidad)) { showAlert(`La mesa tiene capacidad máxima de ${Number(mesaSel.capacidad)} personas`, "danger"); return; }
 
+    // solapamiento
     const fecha = fechaEl.value, hora = horaEl.value, dur = Number(durEl.value);
     if (existeSolapamiento(mesaEl.value, fecha, hora, dur, id || null)) { showAlert("La mesa seleccionada ya está ocupada en ese rango horario", "danger"); return; }
 
@@ -1131,6 +1166,9 @@ document.addEventListener("DOMContentLoaded", () => {
     populateMesaSelect();
   });
 });
+
+
+
 
 
 
