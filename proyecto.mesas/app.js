@@ -4,6 +4,7 @@ function getData(key) {
 }
 function saveData(key, data) { localStorage.setItem(key, JSON.stringify(data)); }
 
+/* ---------------- GLOBALS / PROTECCIONES ---------------- */
 
 const __APP_ACTIVE_ALERTS = new Set();
 let __APP_AUTO_CHECK_ID = null;
@@ -30,7 +31,6 @@ function generateReservaId() {
 }
 
 /* ---------------- ALERTAS (bootstrap) - DEDUPLICACIÓN ---------------- */
-
 function showAlert(msg, type = "info", ms = 3500) {
   if (!msg && msg !== 0) return;
   const map = { info: "info", success: "success", danger: "danger", warning: "warning" };
@@ -581,6 +581,7 @@ function renderReservas(filterMode = null, weekRange = null) {
       durDisplay = (r.duracion || r.duracionReserva) + " h";
     }
 
+    // Siempre incluimos la columna de timer justo antes de los botones de acción
     let rowHtml = `
       <td>${rid}</td>
       <td>${r.nombreCliente || "-"}</td>
@@ -592,35 +593,15 @@ function renderReservas(filterMode = null, weekRange = null) {
       <td id="estado-cell-${rid}">${r.estado || "-"}</td>
       <td>${r.ocasionEspecial || "-"}</td>
       <td>${notasHTML}</td>
-    `;
-    if (separateTimerCol) {
-      rowHtml += `<td id="timer-${rid}" class="small text-muted"></td>`;
-      rowHtml += `
+      <td id="timer-${rid}" class="small text-muted"></td>
       <td class="text-center">
         <button class="btn btn-sm btn-outline-primary me-1" onclick="openEditReserva('${rid}')">Editar</button>
         <button class="btn btn-sm btn-success me-1" onclick="pagarReserva('${rid}')">Pagar</button>
         <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete(() => deleteReserva('${rid}'), '¿Eliminar reserva ${rid}?')">Eliminar</button>
       </td>
-      `;
-    } else {
-      rowHtml += `<td class="text-center">
-        <button class="btn btn-sm btn-outline-primary me-1" onclick="openEditReserva('${rid}')">Editar</button>
-        <button class="btn btn-sm btn-success me-1" onclick="pagarReserva('${rid}')">Pagar</button>
-        <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete(() => deleteReserva('${rid}'), '¿Eliminar reserva ${rid}?')">Eliminar</button>
-      </td>`;
-    }
+    `;
 
     tr.innerHTML = rowHtml;
-
-    if (!separateTimerCol) {
-      const notesTd = tr.querySelector("td:nth-child(10)");
-      if (notesTd) {
-        const timerDiv = document.createElement("div");
-        timerDiv.id = `timer-${rid}`;
-        timerDiv.className = "small text-muted mt-1";
-        notesTd.appendChild(timerDiv);
-      }
-    }
 
     tbody.appendChild(tr);
     startReservaTimer(r);
@@ -648,7 +629,12 @@ function startReservaTimer(reserva) {
     const now = new Date();
     const reservas = getData("reservas") || [];
     const current = reservas.find(rr => (rr.idReserva === reserva.idReserva || rr.id === reserva.idReserva || rr.idReserva === reserva.id || rr.id === reserva.id));
-    if (!current) { timerEl.textContent = ""; try { clearInterval(reservaTimers[rid]); } catch(e){} delete reservaTimers[rid]; return; }
+    if (!current) {
+      timerEl.textContent = "";
+      try { clearInterval(reservaTimers[rid]); } catch(e){}
+      try { delete reservaTimers[rid]; } catch(e){}
+      return;
+    }
     reserva = current;
 
     const fecha = reserva.fecha || reserva.fechaReserva;
@@ -661,6 +647,7 @@ function startReservaTimer(reserva) {
     if (now < start) {
       const diff = start - now;
       timerEl.textContent = `Faltan: ${msToHMS(diff)}`;
+      timerEl.className = "small text-muted text-warning";
     } else if (now >= start && now < end) {
       if (reserva.estado !== "Confirmada") {
         // Actualiza estado en almacenamiento una única vez
@@ -679,27 +666,41 @@ function startReservaTimer(reserva) {
         renderMesas();
       }
       const diff = end - now;
-      timerEl.textContent = `En curso — termina en ${msToHMS(diff)}`;
+      timerEl.textContent = `En curso — ${msToHMS(diff)}`;
+      timerEl.className = "small text-muted text-success";
     } else {
-      // finalizada
-      const all = getData("reservas") || [];
-      const idx = all.findIndex(a => a.idReserva === reserva.idReserva || a.id === reserva.idReserva || a.idReserva === reserva.id);
-      if (idx >= 0) { all[idx].estado = "Finalizada"; saveData("reservas", all); }
-      const mesas = getData("mesas") || [];
-      const mi = mesas.findIndex(mm => mm.id === (reserva.idMesaAsignada || reserva.idMesa));
-      if (mi >= 0 && mesas[mi].estado !== "deshabilitada") { mesas[mi].estado = "disponible"; saveData("mesas", mesas); }
-      timerEl.textContent = "Finalizada";
-
-      // Mostrar alerta de finalización (deduplicada por showAlert)
-      // FIX: evitar "undefined" mostrando nombre seguro o mensaje genérico
-      const displayName = reserva?.nombreCliente || reserva?.nombre || reserva?.idReserva || reserva?.id || "";
-      const mensaje = displayName ? `Reserva ${displayName} finalizada. Mesa liberada.` : `Reserva finalizada. Mesa liberada.`;
-      showAlert(mensaje, "info");
-
+      // finalizada: LIMPIAR TIMER y ELIMINAR reserva + liberar mesa
       try { clearInterval(reservaTimers[rid]); } catch (e) {}
-      delete reservaTimers[rid];
+      try { delete reservaTimers[rid]; } catch(e) {}
 
-      // Actualizar vistas (sin recargar)
+      // Liberar mesa y eliminar reserva de forma automática
+      // Usamos la función deleteReserva para mantener consistencia (no muestra modal)
+      const idToDelete = reserva.idReserva || reserva.id || "";
+      // Si existe, eliminar sin confirmación
+      let reservasArr = getData("reservas") || [];
+      const target = reservasArr.find(r => (r.idReserva === idToDelete || r.id === idToDelete));
+      if (target) {
+        // antes de eliminar, actualizar estado en storage
+        reservasArr = reservasArr.filter(r => !(r.idReserva === idToDelete || r.id === idToDelete));
+        saveData("reservas", reservasArr);
+
+        // liberar mesa asociada si corresponde
+        const mesaId = target.idMesaAsignada || target.idMesa;
+        if (mesaId) {
+          const mesas = getData("mesas") || [];
+          const mi = mesas.findIndex(m => m.id === mesaId);
+          if (mi >= 0 && mesas[mi].estado !== "deshabilitada") {
+            mesas[mi].estado = "disponible";
+            saveData("mesas", mesas);
+          }
+        }
+
+        // Mostrar alerta genérica (sin nombres undefined)
+        const mensaje = `Reserva finalizada. Mesa liberada.`;
+        showAlert(mensaje, "info");
+      }
+
+      // Actualizar vistas
       renderReservas();
       renderMesas();
     }
@@ -759,21 +760,35 @@ function deleteReserva(id) {
 }
 
 function pagarReserva(id) {
+  // Ahora pagar elimina la reserva y libera la mesa inmediatamente
   let reservas = getData("reservas") || [];
   const idx = reservas.findIndex(r => (r.idReserva === id || r.id === id));
   if (idx === -1) { showAlert("Reserva no encontrada", "danger"); return; }
-  reservas[idx].estado = "Finalizada";
+
+  const target = reservas[idx];
+  // limpiar timer si existe
+  const rid = target.idReserva || target.id || "";
+  if (reservaTimers[rid]) {
+    try { clearInterval(reservaTimers[rid]); } catch (e) {}
+    try { delete reservaTimers[rid]; } catch(e) {}
+  }
+
+  // remover reserva
+  reservas.splice(idx, 1);
   saveData("reservas", reservas);
-  const mesaId = reservas[idx].idMesaAsignada || reservas[idx].idMesa;
+
+  // liberar mesa asociada
+  const mesaId = target.idMesaAsignada || target.idMesa;
   if (mesaId) {
     const mesas = getData("mesas") || [];
     const mi = mesas.findIndex(m => m.id === mesaId);
     if (mi >= 0 && mesas[mi].estado !== "deshabilitada") { mesas[mi].estado = "disponible"; saveData("mesas", mesas); }
   }
+
   renderReservas();
   renderMesas();
   populateMesaSelect();
-  showAlert("Reserva pagada y mesa liberada (si corresponde)", "success");
+  showAlert("Reserva pagada y eliminada. Mesa liberada.", "success");
 }
 
 /* ---------------- BIND FORM RESERVA ---------------- */
@@ -1081,7 +1096,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (form) { form.reset(); clearAllValidation(form); }
       populateMesaSelect(mesaSel);
       setTimeout(() => { if (document.getElementById("idMesaAsignada")) document.getElementById("idMesaAsignada").value = mesaSel; }, 0);
-      try { new bootstrap.Modal.getInstance(document.getElementById("modalReserva")).show(); } catch (e) {}
+      try { new bootstrap.Modal(document.getElementById("modalReserva")).show(); } catch (e) {}
     }
     populateMesaSelect();
     renderReservas();
@@ -1095,10 +1110,6 @@ document.addEventListener("DOMContentLoaded", () => {
     populateMesaSelect();
   });
 });
-
-
-
-
 
 
 
