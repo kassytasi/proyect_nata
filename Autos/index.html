@@ -10,15 +10,23 @@
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
+  <!-- Fondo de video -->
+  <div class="video-background">
+    <video autoplay muted loop playsinline id="bg-video">
+      <source src="assets/intro.mp4" type="video/mp4" />
+      Tu navegador no soporta video HTML5.
+    </video>
+  </div>
+
+  <!-- Encabezado con logo y navegación -->
   <header>
     <div class="logo">NEON RUSH</div>
     <nav>
-      <a href="index.html">Inicio</a>
-      <a href="vehiculos.html">Vehículos</a>
-      <a href="circuitos.html">Circuitos</a>
+      <a href="#vehiculos">Vehículos</a>
+      <a href="#circuitos">Circuitos</a>
     </nav>
 
-    <!-- Audio controls (visible) -->
+    <!-- Controles de audio -->
     <div class="audio-controls">
       <button id="audio-toggle" aria-pressed="false" title="Activar/Desactivar sonido">🔊</button>
       <label class="vol">
@@ -27,17 +35,17 @@
     </div>
   </header>
 
-  <main>
-    <section id="home" class="hero">
-      <h1 class="title">Neon Rush — Hypercars 2084</h1>
-      <p class="lead">Velocidad en cuatro ruedas, neón en la ciudad. Practica animaciones y diseño con estos vehículos y pistas urbanas futuristas.</p>
-      <div class="hero-cta">
-        <!-- Este botón arranca la reproducción ambiental si existe el audio -->
-        <a class="btn-play" id="btn-play" href="vehiculos.html">▶ Ver Vehículos</a>
-        <a class="btn-ghost" href="circuitos.html">Ver Circuitos</a>
-      </div>
-    </section>
+  <!-- Pantalla principal tipo "menú de inicio" -->
+  <section class="hero" id="home">
+    <div class="hero-content">
+      <h1 class="title">NEON RUSH</h1>
+      <h2 class="subtitle">HYPERCARS 2084</h2>
+      <button id="start-btn" class="btn-start">JUGAR AHORA</button>
+    </div>
+  </section>
 
+  <!-- Contenido principal del sitio -->
+  <main>
     <section id="vehiculos" class="section">
       <h2>Vehículos</h2>
       <div class="grid" id="vehiculos-grid" aria-live="polite"></div>
@@ -51,9 +59,7 @@
 
   <footer>© Neon Rush — Proyecto educativo</footer>
 
-  <!-- audio file placeholder:
-       - Coloca tu pista en /assets/ambient.mp3 o cambia la ruta en script.js variable ambientSrc.
-       - El archivo puede ser un loop suave (motor/zumbido). -->
+  <!-- Audio ambiental -->
   <audio id="ambient-audio" loop preload="none" src="assets/ambient.mp3" aria-hidden="true"></audio>
 
   <script src="script.js"></script>
