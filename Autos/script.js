@@ -78,7 +78,7 @@ function renderVehiculos(targetId) {
   vehiculos.forEach(v => {
     const card = elt('article', 'card fade-up');
     card.innerHTML = `
-      <img src="assets/${v.imagen}" alt="${v.nombre}">
+      <img src="${v.imagen}" alt="${v.nombre}">
       <div class="info">
         <h3>${v.nombre}</h3>
         <div class="stats">🚀 Vel: ${v.velocidad} &nbsp;⚡ Acel: ${v.aceleracion} &nbsp;🎯 Man: ${v.manejo}</div>
@@ -95,7 +95,7 @@ function renderCircuitos(targetId) {
   circuitos.forEach(c => {
     const div = elt('div', 'circuit fade-up');
     div.innerHTML = `
-      <img src="assets/${c.imagen}" alt="${c.nombre}">
+      <img src="${c.imagen}" alt="${c.nombre}">
       <div class="meta">
         <h3>${c.nombre}</h3>
         <p style="color:#9fb7d9;margin:6px 0">${c.descripcion}</p>
@@ -120,7 +120,7 @@ function setupObserver() {
 }
 
 // ---------- Audio ----------
-const ambientSrc = 'assets/ambient.mp3';
+const ambientSrc = 'ambient.mp3';
 const audioEl = document.getElementById('ambient-audio');
 const audioToggle = document.getElementById('audio-toggle');
 const audioVol = document.getElementById('audio-volume');
@@ -150,30 +150,63 @@ if (audioVol) {
   });
 }
 
-// ---------- Evento de inicio ----------
+// ---------- EVENTO INICIAL ----------
 document.addEventListener('DOMContentLoaded', () => {
   const startBtn = document.getElementById('start-btn');
   const hero = document.querySelector('.hero');
   const main = document.querySelector('main');
+  const vehiculosSection = document.getElementById('vehiculos-section');
+  const circuitosSection = document.getElementById('circuitos-section');
 
-  // Inicialmente ocultar el main
+  // Ocultar todo al inicio
   main.style.display = 'none';
+  vehiculosSection.style.display = 'none';
+  circuitosSection.style.display = 'none';
 
+  // JUGAR AHORA
   if (startBtn) {
     startBtn.addEventListener('click', () => {
-      // Reproducir audio
       if (audioEl && audioEl.paused) audioEl.play().catch(() => {});
-      // Ocultar la pantalla de inicio con transición
       hero.style.opacity = '0';
+
       setTimeout(() => {
         hero.style.display = 'none';
         main.style.display = 'block';
+
+        // Mostrar solo vehículos
+        vehiculosSection.style.display = 'block';
+        circuitosSection.style.display = 'none';
+
         renderVehiculos('vehiculos-grid');
-        renderCircuitos('circuitos-list');
         setupObserver();
       }, 600);
     });
   }
+
+  // NAVEGACIÓN ENTRE SECCIONES
+  const navLinks = document.querySelectorAll('nav a');
+  navLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const target = link.getAttribute('href');
+
+      if (target === '#vehiculos') {
+        vehiculosSection.style.display = 'block';
+        circuitosSection.style.display = 'none';
+        renderVehiculos('vehiculos-grid');
+        setupObserver();
+      }
+
+      if (target === '#circuitos') {
+        vehiculosSection.style.display = 'none';
+        circuitosSection.style.display = 'block';
+        renderCircuitos('circuitos-list');
+        setupObserver();
+      }
+    });
+  });
 });
+
+
 
 
