@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Neon Rush — Hypercars 2084</title>
+  <title>FuturoRacer — Hypercars 2084</title>
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,7 +13,7 @@
   <!-- Fondo de video -->
   <div class="video-background">
     <video autoplay muted loop playsinline id="bg-video">
-      <source src="assets/intro.mp4" type="video/mp4" />
+      <source src="intro.mp4" type="video/mp4" />
       Tu navegador no soporta video HTML5.
     </video>
   </div>
@@ -46,12 +46,12 @@
 
   <!-- Contenido principal del sitio -->
   <main>
-    <section id="vehiculos" class="section">
+    <section id="vehiculos-section" class="section" style="display: none;">
       <h2>Vehículos</h2>
       <div class="grid" id="vehiculos-grid" aria-live="polite"></div>
     </section>
 
-    <section id="circuitos" class="section">
+    <section id="circuitos-section" class="section" style="display: none;">
       <h2>Circuitos</h2>
       <div class="list" id="circuitos-list" aria-live="polite"></div>
     </section>
@@ -60,8 +60,9 @@
   <footer>© Neon Rush — Proyecto educativo</footer>
 
   <!-- Audio ambiental -->
-  <audio id="ambient-audio" loop preload="none" src="assets/ambient.mp3" aria-hidden="true"></audio>
+  <audio id="ambient-audio" loop preload="none" src="ambient.mp3" aria-hidden="true"></audio>
 
   <script src="script.js"></script>
 </body>
 </html>
+
