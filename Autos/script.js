@@ -74,18 +74,16 @@ function elt(tag, cls, html) {
 function renderVehiculos(targetId) {
   const target = document.getElementById(targetId);
   if (!target) return;
+  target.innerHTML = "";
   vehiculos.forEach(v => {
-    const card = elt('article','card fade-up');
+    const card = elt('article', 'card fade-up');
     card.innerHTML = `
-      <div class="glow" aria-hidden="true"></div>
-      <img src="${v.imagen}" alt="${v.nombre}">
+      <img src="assets/${v.imagen}" alt="${v.nombre}">
       <div class="info">
         <h3>${v.nombre}</h3>
         <div class="stats">🚀 Vel: ${v.velocidad} &nbsp;⚡ Acel: ${v.aceleracion} &nbsp;🎯 Man: ${v.manejo}</div>
       </div>
     `;
-    card.addEventListener('mouseenter', ()=> card.classList.add('active'));
-    card.addEventListener('mouseleave', ()=> card.classList.remove('active'));
     target.appendChild(card);
   });
 }
@@ -93,39 +91,37 @@ function renderVehiculos(targetId) {
 function renderCircuitos(targetId) {
   const target = document.getElementById(targetId);
   if (!target) return;
+  target.innerHTML = "";
   circuitos.forEach(c => {
-    const div = elt('div','circuit fade-up');
+    const div = elt('div', 'circuit fade-up');
     div.innerHTML = `
-      <img src="${c.imagen}" alt="${c.nombre}">
+      <img src="assets/${c.imagen}" alt="${c.nombre}">
       <div class="meta">
         <h3>${c.nombre}</h3>
         <p style="color:#9fb7d9;margin:6px 0">${c.descripcion}</p>
-        <div class="difficulty" style="background:linear-gradient(90deg,#00f7ff,#9b59ff)">${c.dificultad}</div>
+        <div class="difficulty">${c.dificultad}</div>
       </div>
     `;
-    div.addEventListener('mouseenter', ()=>div.classList.add('active'));
-    div.addEventListener('mouseleave', ()=>div.classList.remove('active'));
     target.appendChild(div);
   });
 }
 
 // ---------- IntersectionObserver ----------
 function setupObserver() {
-  const obs = new IntersectionObserver((entries)=>{
-    entries.forEach(entry=>{
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
       if (entry.isIntersecting) {
         entry.target.classList.add('in-view');
         obs.unobserve(entry.target);
       }
     });
-  }, {threshold: 0.12});
+  }, { threshold: 0.12 });
   document.querySelectorAll('.fade-up').forEach(el => obs.observe(el));
 }
 
 // ---------- Audio ----------
-const ambientSrc = 'assets/ambient.mp3';  // Ajusta ruta si necesitas
+const ambientSrc = 'assets/ambient.mp3';
 const audioEl = document.getElementById('ambient-audio');
-const btnPlay = document.getElementById('btn-play');
 const audioToggle = document.getElementById('audio-toggle');
 const audioVol = document.getElementById('audio-volume');
 
@@ -134,25 +130,15 @@ if (audioEl) {
   audioEl.volume = audioVol ? parseFloat(audioVol.value) : 0.18;
 }
 
-if (btnPlay) {
-  btnPlay.addEventListener('click', (e) => {
-    if (audioEl && audioEl.paused) {
-      audioEl.currentTime = 0;
-      audioEl.play().catch(()=>{});
-      if (audioToggle) audioToggle.setAttribute('aria-pressed','true');
-    }
-  });
-}
-
 if (audioToggle) {
   audioToggle.addEventListener('click', () => {
     if (!audioEl) return;
     if (audioEl.paused) {
-      audioEl.play().catch(()=>{});
-      audioToggle.setAttribute('aria-pressed','true');
+      audioEl.play().catch(() => {});
+      audioToggle.setAttribute('aria-pressed', 'true');
     } else {
       audioEl.pause();
-      audioToggle.setAttribute('aria-pressed','false');
+      audioToggle.setAttribute('aria-pressed', 'false');
     }
   });
 }
@@ -164,11 +150,30 @@ if (audioVol) {
   });
 }
 
-// ---------- Init ----------
-document.addEventListener('DOMContentLoaded', ()=>{
-  renderVehiculos('vehiculos-grid');
-  renderCircuitos('circuitos-list');
-  renderVehiculos('vehiculos-grid-page');
-  renderCircuitos('circuitos-list-page');
-  setTimeout(setupObserver, 120);
+// ---------- Evento de inicio ----------
+document.addEventListener('DOMContentLoaded', () => {
+  const startBtn = document.getElementById('start-btn');
+  const hero = document.querySelector('.hero');
+  const main = document.querySelector('main');
+
+  // Inicialmente ocultar el main
+  main.style.display = 'none';
+
+  if (startBtn) {
+    startBtn.addEventListener('click', () => {
+      // Reproducir audio
+      if (audioEl && audioEl.paused) audioEl.play().catch(() => {});
+      // Ocultar la pantalla de inicio con transición
+      hero.style.opacity = '0';
+      setTimeout(() => {
+        hero.style.display = 'none';
+        main.style.display = 'block';
+        renderVehiculos('vehiculos-grid');
+        renderCircuitos('circuitos-list');
+        setupObserver();
+      }, 600);
+    });
+  }
 });
+
+
