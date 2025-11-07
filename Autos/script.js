@@ -1,54 +1,49 @@
-const startBtn = document.getElementById('start-btn');
-const modeSelect = document.getElementById('mode-select');
-const home = document.getElementById('home');
-const btnUnJugador = document.getElementById('btn-un-jugador');
-const vehiculosSection = document.getElementById('vehiculos-section');
-const circuitosSection = document.getElementById('circuitos-section');
-const volverMenu = document.getElementById('volver-menu');
-const volverMenu2 = document.getElementById('volver-menu2');
+const startBtn = document.getElementById("start-btn");
+const modeSelect = document.getElementById("mode-select");
+const home = document.getElementById("home");
+const autosScreen = document.getElementById("autos-screen");
+const pistasScreen = document.getElementById("pistas-screen");
+const infoModal = document.getElementById("info-modal");
+const modalText = document.getElementById("modal-text");
+const closeModal = document.getElementById("close-modal");
 
-// Botón "JUGAR AHORA"
-startBtn.addEventListener('click', () => {
-  home.style.display = 'none';
-  modeSelect.style.display = 'flex';
+startBtn.addEventListener("click", () => {
+  home.classList.add("hidden");
+  modeSelect.classList.remove("hidden");
 });
 
-// Modo un jugador
-btnUnJugador.addEventListener('click', () => {
-  modeSelect.style.display = 'none';
-  vehiculosSection.style.display = 'block';
+document.getElementById("btn-un-jugador").addEventListener("click", () => {
+  modeSelect.classList.add("hidden");
+  autosScreen.classList.remove("hidden");
 });
 
-// Volver desde carros
-volverMenu.addEventListener('click', () => {
-  vehiculosSection.style.display = 'none';
-  circuitosSection.style.display = 'block';
+document.getElementById("to-pistas").addEventListener("click", () => {
+  autosScreen.classList.add("hidden");
+  pistasScreen.classList.remove("hidden");
 });
 
-// Volver desde pistas
-volverMenu2.addEventListener('click', () => {
-  circuitosSection.style.display = 'none';
-  modeSelect.style.display = 'flex';
+document.getElementById("back-home").addEventListener("click", () => {
+  autosScreen.classList.add("hidden");
+  modeSelect.classList.remove("hidden");
 });
 
-// Control de audio
-const audio = document.getElementById('ambient-audio');
-const audioToggle = document.getElementById('audio-toggle');
-const volumeSlider = document.getElementById('audio-volume');
-
-audioToggle.addEventListener('click', () => {
-  if (audio.paused) {
-    audio.play();
-    audioToggle.textContent = '🔈';
-  } else {
-    audio.pause();
-    audioToggle.textContent = '🔊';
-  }
+document.getElementById("back-autos").addEventListener("click", () => {
+  pistasScreen.classList.add("hidden");
+  autosScreen.classList.remove("hidden");
 });
 
-volumeSlider.addEventListener('input', (e) => {
-  audio.volume = e.target.value;
+document.querySelectorAll(".card").forEach(card => {
+  card.addEventListener("click", () => {
+    modalText.textContent = card.getAttribute("data-info");
+    infoModal.classList.remove("hidden");
+  });
 });
+
+closeModal.addEventListener("click", () => {
+  infoModal.classList.add("hidden");
+});
+
+
 
 
 
