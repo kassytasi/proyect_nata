@@ -3,37 +3,18 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Hypercars 2084</title>
-  <link rel="stylesheet" href="style.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
+  <title>FuturoRacer 2084</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&display=swap" rel="stylesheet">
 </head>
 <body>
-  <!-- Fondo de video (carro en movimiento) -->
+  <!-- Fondo de video -->
   <div class="video-background">
     <video autoplay muted loop playsinline id="bg-video">
       <source src="intro.mp4" type="video/mp4" />
       Tu navegador no soporta video HTML5.
     </video>
   </div>
-
-  <!-- Encabezado -->
-  <header>
-    <div class="logo">CARS</div>
-    <nav>
-      <a href="#vehiculos">Vehículos</a>
-      <a href="#circuitos">Circuitos</a>
-    </nav>
-
-    <!-- Controles de audio -->
-    <div class="audio-controls">
-      <button id="audio-toggle" aria-pressed="false" title="Activar/Desactivar sonido">🔊</button>
-      <label class="vol">
-        <input id="audio-volume" type="range" min="0" max="1" step="0.01" value="0.18" />
-      </label>
-    </div>
-  </header>
 
   <!-- Pantalla principal -->
   <section class="hero" id="home">
@@ -44,66 +25,73 @@
     </div>
   </section>
 
-  <!-- Selección de modo -->
-  <div class="mode-select" id="mode-select" aria-hidden="true">
-    <h2>Selecciona modo</h2>
-    <div class="mode-btn" id="btn-un-jugador">
-      <div class="icon"></div>
-      <span>Un jugador</span>
+  <!-- Modo Un Jugador -->
+  <section id="mode-select" class="screen hidden">
+    <div class="mode-box neon-box" id="btn-un-jugador">
+      <h2>Un jugador</h2>
+    </div>
+  </section>
+
+  <!-- Selección de Autos -->
+  <section id="autos-screen" class="screen hidden">
+    <h2 class="section-title">Selecciona tu Auto</h2>
+    <div class="card-container">
+      <div class="card neon" data-info="CHRONO DRIFTER — Dominio total del tiempo. Velocidad máxima 350 km/h.">
+        <img src="chro.png" alt="Chrono Drifter">
+        <h3>Chrono Drifter</h3>
+      </div>
+      <div class="card neon" data-info="DUNE RACER — Diseñado para el desierto. Velocidad máxima 320 km/h.">
+        <img src="dune.png" alt="Dune Racer">
+        <h3>Dune Racer</h3>
+      </div>
+      <div class="card neon" data-info="INFERNO — Furia sobre ruedas. Velocidad máxima 380 km/h.">
+        <img src="inferno.png" alt="Inferno">
+        <h3>Inferno</h3>
+      </div>
+      <div class="card neon" data-info="SKYLINE — El rey del aire urbano. Velocidad máxima 340 km/h.">
+        <img src="sky.png" alt="Skyline">
+        <h3>Skyline</h3>
+      </div>
+    </div>
+    <button class="btn-back" id="to-pistas">Ir a Pistas</button>
+    <button class="btn-back" id="back-home">Volver</button>
+  </section>
+
+  <!-- Selección de Pistas -->
+  <section id="pistas-screen" class="screen hidden">
+    <h2 class="section-title">Selecciona la Pista</h2>
+    <div class="card-container">
+      <div class="card neon" data-info="CHRONO CITY — Metropolis temporal llena de neones.">
+        <img src="chropis.png" alt="Chrono City">
+        <h3>Chrono City</h3>
+      </div>
+      <div class="card neon" data-info="DUNE ARENA — Desierto eléctrico con tormentas de plasma.">
+        <img src="dunepis.png" alt="Dune Arena">
+        <h3>Dune Arena</h3>
+      </div>
+      <div class="card neon" data-info="INFERNAL CIRCUIT — Lava y acero fundido.">
+        <img src="infernpis.png" alt="Infernal Circuit">
+        <h3>Infernal Circuit</h3>
+      </div>
+      <div class="card neon" data-info="SKY LOOP — Carril flotante en el cielo de NeoTokyo.">
+        <img src="skypis.png" alt="Sky Loop">
+        <h3>Sky Loop</h3>
+      </div>
+    </div>
+    <button class="btn-back" id="back-autos">Volver</button>
+  </section>
+
+  <!-- Modal de información -->
+  <div id="info-modal" class="modal hidden">
+    <div class="modal-content neon-box">
+      <span id="close-modal" class="close">&times;</span>
+      <p id="modal-text"></p>
     </div>
   </div>
-
-  <!-- Pantalla de selección de carros -->
-  <section id="vehiculos-section" class="section" style="display: none;">
-    <h2>Exposición</h2>
-    <p class="desc">Mostrar los coches</p>
-    <div class="grid" id="vehiculos-grid">
-      <div class="car-card">
-        <img src="chro.png" alt="Chrono Drifter">
-        <h3>CHRONO DRIFTER</h3>
-      </div>
-      <div class="car-card">
-        <img src="dune.png" alt="Dune Racer">
-        <h3>DUNE RACER</h3>
-      </div>
-      <div class="car-card">
-        <img src="inferno.png" alt="Inferno Blaze">
-        <h3>INFERNO BLAZE</h3>
-      </div>
-    </div>
-    <button class="btn-volver" id="volver-menu">Volver</button>
-  </section>
-
-  <!-- Pantalla de selección de pistas -->
-  <section id="circuitos-section" class="section" style="display: none;">
-    <h2>Pistas</h2>
-    <p class="desc">Elige tu circuito</p>
-    <div class="grid" id="circuitos-grid">
-      <div class="track-card">
-        <img src="chropis.png" alt="Ciudad Neón">
-        <h3>CIUDAD NEÓN</h3>
-      </div>
-      <div class="track-card">
-        <img src="dunepis.png" alt="Desierto de Titanio">
-        <h3>DESIERTO DE TITANIO</h3>
-      </div>
-      <div class="track-card">
-        <img src="infernpis.png" alt="Inferno Circuit">
-        <h3>INFERNO CIRCUIT</h3>
-      </div>
-    </div>
-    <button class="btn-volver" id="volver-menu2">Volver</button>
-  </section>
-
-  <footer>© Neon Rush — Proyecto educativo</footer>
-
-  <!-- Audio ambiental -->
-  <audio id="ambient-audio" loop preload="none" src="ambient.mp3"></audio>
 
   <script src="script.js"></script>
 </body>
 </html>
-
 
 
 
