@@ -1,4 +1,4 @@
-// ---------- Datos: VEHÍCULOS ----------
+
 const vehiculos = [
   {
     nombre: "CHRONO DRIFTER",
@@ -150,36 +150,48 @@ if (audioVol) {
   });
 }
 
-// ---------- EVENTO INICIAL ----------
+// ---------- EVENTO INICIAL y flujo Mode Select ----------
 document.addEventListener('DOMContentLoaded', () => {
   const startBtn = document.getElementById('start-btn');
   const hero = document.querySelector('.hero');
   const main = document.querySelector('main');
   const vehiculosSection = document.getElementById('vehiculos-section');
   const circuitosSection = document.getElementById('circuitos-section');
+  const modeScreen = document.getElementById('mode-select');
+  const unJugadorBtn = document.getElementById('btn-un-jugador');
 
   // Ocultar todo al inicio
   main.style.display = 'none';
   vehiculosSection.style.display = 'none';
   circuitosSection.style.display = 'none';
 
-  // JUGAR AHORA
+  // JUGAR AHORA -> mostrar pantalla de modo
   if (startBtn) {
     startBtn.addEventListener('click', () => {
       if (audioEl && audioEl.paused) audioEl.play().catch(() => {});
       hero.style.opacity = '0';
-
       setTimeout(() => {
         hero.style.display = 'none';
-        main.style.display = 'block';
-
-        // Mostrar solo vehículos
-        vehiculosSection.style.display = 'block';
-        circuitosSection.style.display = 'none';
-
-        renderVehiculos('vehiculos-grid');
-        setupObserver();
+        modeScreen.classList.add('active');
+        modeScreen.setAttribute('aria-hidden','false');
       }, 600);
+    });
+  }
+
+  // Un jugador -> mostrar vehiculos
+  if (unJugadorBtn) {
+    unJugadorBtn.addEventListener('click', () => {
+      modeScreen.classList.remove('active');
+      modeScreen.setAttribute('aria-hidden','true');
+      main.style.display = 'block';
+      vehiculosSection.style.display = 'block';
+      circuitosSection.style.display = 'none';
+      renderVehiculos('vehiculos-grid');
+      setupObserver();
+    });
+    // accesibilidad: enter/space
+    unJugadorBtn.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') unJugadorBtn.click();
     });
   }
 
@@ -206,6 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 });
+
 
 
 
