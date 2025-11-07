@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>FuturoRacer — Hypercars 2084</title>
+  <title> Hypercars 2084</title>
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,7 +20,7 @@
 
   <!-- Encabezado con logo y navegación -->
   <header>
-    <div class="logo">NEON RUSH</div>
+    <div class="logo">CARS</div>
     <nav>
       <a href="#vehiculos">Vehículos</a>
       <a href="#circuitos">Circuitos</a>
@@ -38,11 +38,22 @@
   <!-- Pantalla principal tipo "menú de inicio" -->
   <section class="hero" id="home">
     <div class="hero-content">
-      <h1 class="title">NEON RUSH</h1>
+      <h1 class="title">FuturoRacer </h1>
       <h2 class="subtitle">HYPERCARS 2084</h2>
       <button id="start-btn" class="btn-start">JUGAR AHORA</button>
     </div>
+
+   
   </section>
+
+  <!-- Pantalla intermedia: selección de modo de juego -->
+  <div class="mode-select" id="mode-select" aria-hidden="true">
+    <h2>Selecciona modo</h2>
+    <div class="mode-btn" id="btn-un-jugador" role="button" tabindex="0" aria-label="Un jugador">
+      <div class="icon" aria-hidden="true"></div>
+      <span>Un jugador</span>
+    </div>
+  </div>
 
   <!-- Contenido principal del sitio -->
   <main>
@@ -65,4 +76,6 @@
   <script src="script.js"></script>
 </body>
 </html>
+
+
 
