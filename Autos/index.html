@@ -8,6 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&display=swap" rel="stylesheet">
 </head>
 <body>
+
   <!-- Fondo de video -->
   <div class="video-background">
     <video autoplay muted loop playsinline id="bg-video">
@@ -17,7 +18,7 @@
   </div>
 
   <!-- Pantalla principal -->
-  <section class="hero" id="home">
+  <section class="hero screen" id="home">
     <div class="hero-content">
       <h1 class="title">FuturoRacer</h1>
       <h2 class="subtitle">HYPERCARS 2084</h2>
@@ -36,58 +37,128 @@
   <section id="autos-screen" class="screen hidden">
     <h2 class="section-title">Selecciona tu Auto</h2>
     <div class="card-container">
-      <div class="card neon" data-info="CHRONO DRIFTER — Dominio total del tiempo. Velocidad máxima 350 km/h.">
+      <div class="card neon" data-car="chrono">
         <img src="chro.png" alt="Chrono Drifter">
         <h3>Chrono Drifter</h3>
       </div>
-      <div class="card neon" data-info="DUNE RACER — Diseñado para el desierto. Velocidad máxima 320 km/h.">
+      <div class="card neon" data-car="dune">
         <img src="dune.png" alt="Dune Racer">
         <h3>Dune Racer</h3>
       </div>
-      <div class="card neon" data-info="INFERNO — Furia sobre ruedas. Velocidad máxima 380 km/h.">
+      <div class="card neon" data-car="inferno">
         <img src="inferno.png" alt="Inferno">
         <h3>Inferno</h3>
       </div>
-      <div class="card neon" data-info="SKYLINE — El rey del aire urbano. Velocidad máxima 340 km/h.">
+      <div class="card neon" data-car="sky">
         <img src="sky.png" alt="Skyline">
         <h3>Skyline</h3>
       </div>
     </div>
-    <button class="btn-back" id="to-pistas">Ir a Pistas</button>
-    <button class="btn-back" id="back-home">Volver</button>
+    <div class="controls-row">
+      <button class="btn-back" id="back-home">Volver</button>
+    </div>
+  </section>
+
+  <!-- Detalle del Auto (ficha + piloto girando) -->
+  <section id="detalle-auto" class="screen hidden">
+    <div class="detalle-container">
+
+      <div class="left-column">
+        <div class="auto-card">
+          <img id="auto-img" src="" alt="Auto" class="auto-grande">
+          <div class="auto-name" id="auto-nombre">Nombre</div>
+        </div>
+
+        <!-- ficha del piloto debajo -->
+        <div class="piloto-card">
+          <div class="piloto-viewport">
+            <div class="piloto-3d" id="piloto-3d">
+              <img id="piloto-img" src="" alt="Piloto" class="piloto-img">
+            </div>
+          </div>
+          <div class="piloto-info">
+            <h4 id="piloto-nombre">Piloto</h4>
+            <p id="piloto-descripcion">Descripción del piloto...</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="right-column">
+        <div class="auto-info neon-box">
+          <h2 id="auto-title">Auto Title</h2>
+          <p id="auto-descripcion">Descripción extendida del auto: velocidad, potencia, tipo y estilo de conducción.</p>
+          <div id="auto-stats" class="stats"></div>
+
+          <hr class="sep" />
+
+          <div class="more-stats">
+            <div><strong>Velocidad:</strong> <span id="stat-vel"></span></div>
+            <div><strong>Aceleración:</strong> <span id="stat-acel"></span></div>
+            <div><strong>Control:</strong> <span id="stat-control"></span></div>
+            <div><strong>Dificultad:</strong> <span id="stat-dif"></span></div>
+          </div>
+        </div>
+
+        <div class="botones-detalle">
+          <button class="btn-back" id="volver-autos">VOLVER</button>
+          <button class="btn-back" id="to-pistas">PISTAS</button>
+        </div>
+      </div>
+
+    </div>
   </section>
 
   <!-- Selección de Pistas -->
   <section id="pistas-screen" class="screen hidden">
     <h2 class="section-title">Selecciona la Pista</h2>
     <div class="card-container">
-      <div class="card neon" data-info="CHRONO CITY — Metropolis temporal llena de neones.">
+      <div class="card neon" data-track="chrono-city">
         <img src="chropis.png" alt="Chrono City">
         <h3>Chrono City</h3>
       </div>
-      <div class="card neon" data-info="DUNE ARENA — Desierto eléctrico con tormentas de plasma.">
+      <div class="card neon" data-track="dune-arena">
         <img src="dunepis.png" alt="Dune Arena">
         <h3>Dune Arena</h3>
       </div>
-      <div class="card neon" data-info="INFERNAL CIRCUIT — Lava y acero fundido.">
+      <div class="card neon" data-track="infernal-circuit">
         <img src="infernpis.png" alt="Infernal Circuit">
         <h3>Infernal Circuit</h3>
       </div>
-      <div class="card neon" data-info="SKY LOOP — Carril flotante en el cielo de NeoTokyo.">
+      <div class="card neon" data-track="sky-loop">
         <img src="skypis.png" alt="Sky Loop">
         <h3>Sky Loop</h3>
       </div>
     </div>
-    <button class="btn-back" id="back-autos">Volver</button>
+    <div class="controls-row">
+      <button class="btn-back" id="back-detalle-auto">Volver</button>
+    </div>
   </section>
 
-  <!-- Modal de información -->
-  <div id="info-modal" class="modal hidden">
-    <div class="modal-content neon-box">
-      <span id="close-modal" class="close">&times;</span>
-      <p id="modal-text"></p>
+  <!-- Detalle de Pista (muestra pista + auto elegido animado cruzando) -->
+  <section id="detalle-pista" class="screen hidden">
+    <div class="pista-container">
+      <div class="pista-bg" id="pista-bg"></div>
+
+      <div class="pista-left">
+        <img id="pista-img" src="" alt="Pista" class="pista-grande">
+      </div>
+
+      <div class="pista-right">
+        <div class="pista-info neon-box">
+          <h2 id="pista-nombre">Pista</h2>
+          <p id="pista-descripcion">Descripción de la pista...</p>
+          <div class="botones-detalle">
+            <button class="btn-back" id="volver-pistas">Volver</button>
+            <button class="btn-back" id="iniciar-carrera">Iniciar Carrera</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- auto pequeño que cruza la pista para efecto -->
+      <img id="pista-auto" src="" alt="Auto corriendo" class="pista-auto hidden">
+
     </div>
-  </div>
+  </section>
 
   <script src="script.js"></script>
 </body>
