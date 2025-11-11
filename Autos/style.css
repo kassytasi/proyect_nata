@@ -244,4 +244,19 @@ body {
 .pista-auto.animate {
   animation: runAcross 3.5s linear forwards;
 }
+@keyframes runAcross {
+  0% { left:-25%; transform: translateX(0) scale(0.9); opacity:0; }
+  10% { opacity:1; }
+  50% { left:50%; transform: translateX(0) scale(1); }
+  100% { left:120%; opacity:0; transform: translateX(0) scale(1.1); }
+}
 
+/* responsive */
+@media (max-width:1000px) {
+  .detalle-container { flex-direction:column; align-items:center; gap:18px; padding:18px; }
+  .left-column, .right-column { width:100%; }
+  .auto-grande { width: 86%; }
+  .piloto-viewport { width:160px; height:210px; }
+  .pista-right, .pista-left { width:100%; }
+  .pista-grande { width:90%; }
+}
