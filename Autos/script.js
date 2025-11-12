@@ -37,7 +37,7 @@ const backDetalleAuto = document.getElementById("back-detalle-auto");
 const volverPistas = document.getElementById("volver-pistas");
 const iniciarCarrera = document.getElementById("iniciar-carrera");
 
-// === DATOS (usando los nombres reales de tus archivos) ===
+// === DATOS DE AUTOS ===
 const dataAutos = {
   chrono: {
     nombre: "Chrono Drifter",
@@ -89,6 +89,7 @@ const dataAutos = {
   }
 };
 
+// === DATOS DE PISTAS ===
 const dataPistas = {
   "chrono-city": {
     nombre: "Chrono City",
@@ -112,26 +113,30 @@ const dataPistas = {
   }
 };
 
-// estado actual seleccionado
+// === ESTADO ACTUAL ===
 let seleccionActual = { carKey: null, trackKey: null };
 
 // === FLUJO DE PANTALLAS ===
+
+// Inicio -> Modo de juego
 startBtn.onclick = () => {
   home.classList.add("hidden");
   modeSelect.classList.remove("hidden");
 };
 
+// Modo un jugador -> Selección de autos
 btnUnJugador.onclick = () => {
   modeSelect.classList.add("hidden");
   autosScreen.classList.remove("hidden");
 };
 
+// Volver desde autos al modo
 backHome.onclick = () => {
   autosScreen.classList.add("hidden");
   modeSelect.classList.remove("hidden");
 };
 
-// seleccionar auto
+// Selección de auto
 document.querySelectorAll("#autos-screen .card").forEach(card => {
   card.onclick = () => {
     const key = card.dataset.car;
@@ -141,44 +146,44 @@ document.querySelectorAll("#autos-screen .card").forEach(card => {
     seleccionActual.carKey = key;
 
     autoImg.src = info.img;
-    document.getElementById("auto-title").textContent = info.nombre;
+    autoTitle.textContent = info.nombre;
     autoNombre.textContent = info.nombre;
     autoDescripcion.textContent = info.descripcion;
     autoStats.textContent = info.stats;
-    // stats detal
-    document.getElementById("stat-vel").textContent = info.vel;
-    document.getElementById("stat-acel").textContent = info.acel;
-    document.getElementById("stat-control").textContent = info.control;
-    document.getElementById("stat-dif").textContent = info.dif;
+
+    statVel.textContent = info.vel;
+    statAcel.textContent = info.acel;
+    statControl.textContent = info.control;
+    statDif.textContent = info.dif;
 
     pilotoImg.src = info.pilotoImg;
     pilotoNombre.textContent = info.piloto;
-    pilotoDescripcion.textContent = info.descripcion; // puedes cambiar por texto del piloto si lo quieres distinto
+    pilotoDescripcion.textContent = info.descripcion;
 
     autosScreen.classList.add("hidden");
     detalleAuto.classList.remove("hidden");
   };
 });
 
-// volver desde detalle al listado de autos
+// Volver desde detalle de auto
 volverAutos.onclick = () => {
   detalleAuto.classList.add("hidden");
   autosScreen.classList.remove("hidden");
 };
 
-// ir a pistas desde detalle auto
+// Ir a selección de pistas
 toPistas.onclick = () => {
   detalleAuto.classList.add("hidden");
   pistasScreen.classList.remove("hidden");
 };
 
-// volver desde pistas al detalle auto
+// Volver desde pistas al detalle del auto
 backDetalleAuto.onclick = () => {
   pistasScreen.classList.add("hidden");
   detalleAuto.classList.remove("hidden");
 };
 
-// seleccionar pista -> abrir detalle pista
+// Selección de pista -> Detalle de pista
 document.querySelectorAll("#pistas-screen .card").forEach(card => {
   card.onclick = () => {
     const key = card.dataset.track;
@@ -191,46 +196,28 @@ document.querySelectorAll("#pistas-screen .card").forEach(card => {
     pistaNombre.textContent = pinfo.nombre;
     pistaDescripcion.textContent = pinfo.descripcion;
 
-    // set background image (subtil)
     pistaBg.style.backgroundImage = `url('${pinfo.img}')`;
     pistaBg.style.backgroundSize = 'cover';
     pistaBg.style.backgroundPosition = 'center';
 
-    // show and animate a small car crossing the track (uses selected car if any)
-    if (seleccionActual.carKey) {
-      const carInfo = dataAutos[seleccionActual.carKey];
-      pistaAuto.src = carInfo.img;
-      pistaAuto.classList.remove('hidden');
-      // restart animation by removing and forcing reflow
-      pistaAuto.classList.remove('animate');
-      void pistaAuto.offsetWidth;
-      pistaAuto.classList.add('animate');
-      // hide after animation ends
-      pistaAuto.addEventListener('animationend', () => {
-        pistaAuto.classList.add('hidden');
-      }, { once: true });
-    } else {
-      pistaAuto.classList.add('hidden');
-    }
+    // 🚫 Auto animado eliminado: ya no cruza la pantalla
+    pistaAuto.classList.add('hidden');
 
     pistasScreen.classList.add("hidden");
     detallePista.classList.remove("hidden");
   };
 });
 
-// volver desde detalle pista
+// Volver desde detalle de pista
 volverPistas.onclick = () => {
   detallePista.classList.add("hidden");
   pistasScreen.classList.remove("hidden");
 };
 
-// iniciar carrera: aquí solo demostración (puedes integrar motor de juego)
+// Iniciar carrera
 iniciarCarrera.onclick = () => {
-  // ejemplo simple: mostrar alerta y efecto (puedes reemplazarlo con tu escena)
   alert(`¡Comenzando carrera en ${pistaNombre.textContent} con ${autoNombre.textContent}!`);
 };
-
-
 
 
 
