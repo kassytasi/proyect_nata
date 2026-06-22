@@ -1,2 +1,0 @@
-# proyect_nata
-all
